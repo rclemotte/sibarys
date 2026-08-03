@@ -24,15 +24,16 @@ export default function ExportPanel({
 
   async function consultar(): Promise<Consumo[]> {
     const supabase = createClient();
-    let q = supabase
-      .from("consumo")
-      .select("*")
-      .order("registrado_en", { ascending: false });
+    let q = supabase.from("consumo").select("*");
     if (choferId) q = q.eq("chofer_id", choferId);
     if (vehiculoId) q = q.eq("vehiculo_id", vehiculoId);
-    if (desde) q = q.gte("registrado_en", new Date(desde + "T00:00:00").toISOString());
-    if (hasta) q = q.lte("registrado_en", new Date(hasta + "T23:59:59").toISOString());
-    const { data, error } = await q;
+    if (desde)
+      q = q.gte("registrado_en", new Date(desde + "T00:00:00").toISOString());
+    if (hasta)
+      q = q.lte("registrado_en", new Date(hasta + "T23:59:59").toISOString());
+    const { data, error } = await q.order("registrado_en", {
+      ascending: false,
+    });
     if (error) throw error;
     return (data || []) as Consumo[];
   }
