@@ -40,6 +40,81 @@ export default async function DashboardPage() {
 
   const cargas = (rows || []) as Consumo[];
 
+  // ---- Alerta de consumo alto de HOY (chofer) ------------------------------
+  // Referencia por vehículo: consumo_promedio_asignado (tipeado); si no está,
+  // cae al promedio histórico real del vehículo. Se avisa si el rendimiento de
+  // una carga de hoy es 15% peor (menos km/l) que esa referencia.
+  const UMBRAL_PEOR = 0.15;
+
+  const inicioHoy = new Date();
+  inicioHoy.setHours(0, 0, 0, 0);
+
+  const cargasHoy = cargas.filter(
+    (r) =>
+      r.km_por_litro != null &&
+      new Date(r.registrado_en).getTime() >= inicioHoy.getTime()
+  );
+
+  const alertas: {
+    vehiculo: string;
+    kmL: number;
+    referencia: number;
+  }[] = [];
+
+  if (cargasHoy.length > 0) {
+    const vehIds = Array.from(new Set(cargasHoy.map((r) => r.vehiculo_id)));
+
+    const { data: vehData } = await supabase
+      .from("vehiculos")
+      .select("id, consumo_promedio_asignado")
+      .in("id", vehIds);
+    const asignadoPorVeh = new Map<string, number | null>();
+    (vehData || []).forEach((v: any) =>
+      asignadoPorVeh.set(
+        v.id,
+        v.consumo_promedio_asignado != null
+          ? Number(v.consumo_promedio_asignado)
+          : null
+      )
+    );
+
+    // Promedio histórico (respaldo) por vehículo
+    const { data: histData } = await supabase
+      .from("consumo")
+      .select("vehiculo_id, km_por_litro")
+      .in("vehiculo_id", vehIds)
+      .not("km_por_litro", "is", null);
+    const acum = new Map<string, { suma: number; n: number }>();
+    (histData || []).forEach((r: any) => {
+      const a = acum.get(r.vehiculo_id) || { suma: 0, n: 0 };
+      a.suma += Number(r.km_por_litro);
+      a.n += 1;
+      acum.set(r.vehiculo_id, a);
+    });
+
+    const yaAlertado = new Set<string>();
+    for (const r of cargasHoy) {
+      if (yaAlertado.has(r.vehiculo_id)) continue;
+      const asignado = asignadoPorVeh.get(r.vehiculo_id);
+      const hist = acum.get(r.vehiculo_id);
+      const referencia =
+        asignado != null && asignado > 0
+          ? asignado
+          : hist && hist.n > 0
+          ? hist.suma / hist.n
+          : null;
+      if (referencia == null || referencia <= 0) continue;
+      if (Number(r.km_por_litro) < referencia * (1 - UMBRAL_PEOR)) {
+        alertas.push({
+          vehiculo: r.vehiculo_nombre,
+          kmL: Number(r.km_por_litro),
+          referencia,
+        });
+        yaAlertado.add(r.vehiculo_id);
+      }
+    }
+  }
+
   const litrosMes = cargas.reduce((s, r) => s + Number(r.litros), 0);
   const costoMes = cargas.reduce((s, r) => s + Number(r.costo_total || 0), 0);
   const conKmL = cargas.filter((r) => r.km_por_litro != null);
@@ -52,6 +127,27 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      {alertas.length > 0 ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg" aria-hidden="true">
+              ⚠️
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-amber-800">
+                Consumo alto hoy
+              </p>
+              {alertas.map((a, i) => (
+                <p key={i} className="text-xs text-amber-700">
+                  {a.vehiculo}: {fmtNumber(a.kmL, 1)} km/l (referencia{" "}
+                  {fmtNumber(a.referencia, 1)} km/l). Revisá la carga.
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div>
         <h1 className="text-xl font-bold">Resumen del mes</h1>
         <p className="text-sm text-slate-500">

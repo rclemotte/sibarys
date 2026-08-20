@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import type { VehiculoParaCarga, PrecioVigente } from "@/lib/types";
+import type {
+  VehiculoParaCarga,
+  PrecioVigente,
+  EstacionParaCarga,
+} from "@/lib/types";
 import FuelForm from "./FuelForm";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +37,26 @@ export default async function CargarPage() {
       .eq("activo", true);
     vehiculoIds = (data || []).map((a) => a.vehiculo_id as string);
   }
+
+  // Estaciones de servicio activas (para el desplegable de la carga)
+  const { data: estData } = await supabase
+    .from("estaciones_servicio")
+    .select("id, nombre, localidad, activo, emblemas(nombre)")
+    .eq("activo", true)
+    .order("nombre");
+  const estaciones: EstacionParaCarga[] = (
+    (estData || []) as unknown as {
+      id: string;
+      nombre: string;
+      localidad: string | null;
+      emblemas: { nombre: string } | null;
+    }[]
+  ).map((e) => ({
+    id: e.id,
+    nombre: e.nombre,
+    localidad: e.localidad,
+    emblema_nombre: e.emblemas?.nombre ?? null,
+  }));
 
   let vehiculos: VehiculoParaCarga[] = [];
 
@@ -102,7 +126,7 @@ export default async function CargarPage() {
             : "No tenés vehículos asignados. Pedile al administrador que te asigne uno."}
         </div>
       ) : (
-        <FuelForm vehiculos={vehiculos} />
+        <FuelForm vehiculos={vehiculos} estaciones={estaciones} />
       )}
     </div>
   );

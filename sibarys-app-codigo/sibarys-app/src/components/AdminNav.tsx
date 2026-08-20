@@ -9,6 +9,9 @@ const tabs = [
   { href: "/admin/tarifas", label: "Tarifas" },
   { href: "/admin/combustibles", label: "Combustibles" },
   { href: "/admin/marcas", label: "Marcas" },
+  { href: "/admin/empresas", label: "Empresas" },
+  { href: "/admin/emblemas", label: "Emblemas" },
+  { href: "/admin/estaciones", label: "Estaciones" },
   { href: "/admin/choferes", label: "Choferes" },
   { href: "/admin/exportar", label: "Exportar" },
 ];

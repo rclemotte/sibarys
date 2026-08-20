@@ -23,7 +23,7 @@ export async function crearCarga(
   const precioRaw = formData.get("precio_litro");
   const precio_litro =
     precioRaw && String(precioRaw).trim() !== "" ? Number(precioRaw) : null;
-  const estacion = String(formData.get("estacion") || "").trim() || null;
+  const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
   const notas = String(formData.get("notas") || "").trim() || null;
   const tanque_lleno = formData.get("tanque_lleno") === "on";
   const fechaRaw = String(formData.get("registrado_en") || "");
@@ -52,6 +52,24 @@ export async function crearCarga(
     };
   }
 
+  // Si eligió una estación, componemos también el texto legacy "estacion"
+  // (lo leen historial, reportes y exportar) para no tener que tocarlos.
+  let estacion: string | null = null;
+  if (estacion_id) {
+    const { data: est } = await supabase
+      .from("estaciones_servicio")
+      .select("nombre, localidad, emblemas(nombre)")
+      .eq("id", estacion_id)
+      .maybeSingle();
+    if (est) {
+      const emblema = (est as any).emblemas?.nombre as string | undefined;
+      estacion =
+        `${est.nombre}` +
+        (emblema ? ` (${emblema})` : "") +
+        (est.localidad ? ` · ${est.localidad}` : "");
+    }
+  }
+
   const { error } = await supabase.from("cargas").insert({
     vehiculo_id,
     chofer_id: user.id,
@@ -60,6 +78,7 @@ export async function crearCarga(
     litros,
     precio_litro,
     estacion,
+    estacion_id,
     notas,
     tanque_lleno,
     registrado_en,

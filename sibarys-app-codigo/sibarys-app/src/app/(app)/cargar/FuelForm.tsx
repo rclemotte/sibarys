@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { crearCarga, type CargarState } from "./actions";
-import type { VehiculoParaCarga } from "@/lib/types";
+import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -16,8 +16,10 @@ function Submit() {
 
 export default function FuelForm({
   vehiculos,
+  estaciones,
 }: {
   vehiculos: VehiculoParaCarga[];
+  estaciones: EstacionParaCarga[];
 }) {
   const [state, formAction] = useFormState<CargarState, FormData>(crearCarga, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -184,16 +186,24 @@ export default function FuelForm({
             />
           </div>
           <div>
-            <label className="label" htmlFor="estacion">
+            <label className="label" htmlFor="estacion_id">
               Estación <span className="text-slate-300">(opc.)</span>
             </label>
-            <input
-              id="estacion"
-              name="estacion"
-              type="text"
+            <select
+              id="estacion_id"
+              name="estacion_id"
               className="field"
-              placeholder="Ej. YPF Ruta 8"
-            />
+              defaultValue=""
+            >
+              <option value="">Sin especificar</option>
+              {estaciones.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                  {e.emblema_nombre ? ` — ${e.emblema_nombre}` : ""}
+                  {e.localidad ? ` (${e.localidad})` : ""}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { crearVehiculo, type VehState } from "./actions";
-import type { TipoCombustible, Marca } from "@/lib/types";
+import type { TipoCombustible, Marca, Empresa } from "@/lib/types";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -17,11 +17,14 @@ function Submit() {
 export default function VehicleForm({
   tipos,
   marcas,
+  empresas,
 }: {
   tipos: TipoCombustible[];
   marcas: Marca[];
+  empresas: Empresa[];
 }) {
   const [open, setOpen] = useState(false);
+  const [alquilado, setAlquilado] = useState(false);
   const [state, formAction] = useFormState<VehState, FormData>(
     crearVehiculo,
     {}
@@ -31,6 +34,7 @@ export default function VehicleForm({
   useEffect(() => {
     if (state.success) {
       ref.current?.reset();
+      setAlquilado(false);
       setOpen(false);
     }
   }, [state.success]);
@@ -82,6 +86,64 @@ export default function VehicleForm({
           No hay marcas cargadas. Agregalas en la pestaña Marcas.
         </p>
       ) : null}
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="label">Capacidad tanque (L)</label>
+          <input
+            name="capacidad_tanque_litros"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            className="field"
+            placeholder="Ej. 55"
+          />
+        </div>
+        <div>
+          <label className="label">Consumo prom. (km/l)</label>
+          <input
+            name="consumo_promedio_asignado"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            className="field"
+            placeholder="Ej. 12.5"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-slate-50 px-4 py-3">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            name="es_alquilado"
+            checked={alquilado}
+            onChange={(e) => setAlquilado(e.target.checked)}
+            className="h-5 w-5 accent-brand"
+          />
+          <span className="text-sm text-slate-600">Vehículo alquilado</span>
+        </label>
+        {alquilado ? (
+          <div className="mt-3">
+            <label className="label">Empresa que lo alquila</label>
+            <select name="empresa_id" className="field" defaultValue="">
+              <option value="">Elegí…</option>
+              {empresas.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nombre}
+                </option>
+              ))}
+            </select>
+            {empresas.length === 0 ? (
+              <p className="mt-1 text-xs text-amber-600">
+                No hay empresas cargadas. Agregalas en la pestaña Empresas.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       <div>
         <label className="label">Combustibles que puede usar</label>

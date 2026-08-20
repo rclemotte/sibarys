@@ -38,6 +38,40 @@ export interface Marca {
   creado_en: string;
 }
 
+/** Empresa de la que se alquila un vehículo (rentadora / agencia). */
+export interface Empresa {
+  id: string;
+  nombre: string;
+  activo: boolean;
+  creado_en: string;
+}
+
+/** Emblema de la estación de nafta (Shell, YPF, Axion…). */
+export interface Emblema {
+  id: string;
+  nombre: string;
+  activo: boolean;
+  creado_en: string;
+}
+
+/** Estación de servicio concreta (sucursal de un emblema). */
+export interface EstacionServicio {
+  id: string;
+  nombre: string;
+  localidad: string | null;
+  emblema_id: string | null;
+  activo: boolean;
+  creado_en: string;
+}
+
+/** Estación con el nombre de su emblema, para desplegables. */
+export interface EstacionParaCarga {
+  id: string;
+  nombre: string;
+  localidad: string | null;
+  emblema_nombre: string | null;
+}
+
 export interface Vehiculo {
   id: string;
   patente: string;
@@ -45,6 +79,10 @@ export interface Vehiculo {
   marca: string | null;
   modelo: string | null;
   anio: number | null;
+  capacidad_tanque_litros: number | null;
+  es_alquilado: boolean;
+  empresa_id: string | null;
+  consumo_promedio_asignado: number | null;
   activo: boolean;
   creado_en: string;
 }
@@ -69,6 +107,7 @@ export interface Carga {
   costo_total: number | null;
   tanque_lleno: boolean;
   estacion: string | null;
+  estacion_id: string | null;
   notas: string | null;
   creado_en: string;
 }

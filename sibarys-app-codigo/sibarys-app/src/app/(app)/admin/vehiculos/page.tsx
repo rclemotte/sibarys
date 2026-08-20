@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Vehiculo, TipoCombustible, Marca } from "@/lib/types";
+import type { Vehiculo, TipoCombustible, Marca, Empresa } from "@/lib/types";
 import AdminNav from "@/components/AdminNav";
 import VehicleForm from "./VehicleForm";
 import VehicleFuelEditor from "./VehicleFuelEditor";
+import VehicleDataEditor from "./VehicleDataEditor";
 import { toggleVehiculo } from "./actions";
+import { fmtNumber } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +31,7 @@ export default async function VehiculosPage() {
     );
   }
 
-  const [{ data: vs }, { data: ts }, { data: vc }, { data: ms }] =
+  const [{ data: vs }, { data: ts }, { data: vc }, { data: ms }, { data: eps }] =
     await Promise.all([
       supabase
         .from("vehiculos")
@@ -45,11 +47,14 @@ export default async function VehiculosPage() {
         .from("vehiculo_combustibles")
         .select("vehiculo_id, tipo_combustible_id"),
       supabase.from("marcas").select("*").eq("activo", true).order("nombre"),
+      supabase.from("empresas").select("*").eq("activo", true).order("nombre"),
     ]);
 
   const vehiculos = (vs || []) as Vehiculo[];
   const tipos = (ts || []) as TipoCombustible[];
   const marcas = (ms || []) as Marca[];
+  const empresas = (eps || []) as Empresa[];
+  const empresaPorId = new Map(empresas.map((e) => [e.id, e.nombre]));
 
   const combPorVehiculo = new Map<string, string[]>();
   (vc || []).forEach((row: any) => {
@@ -63,7 +68,7 @@ export default async function VehiculosPage() {
       <h1 className="text-xl font-bold">Administración</h1>
       <AdminNav />
 
-      <VehicleForm tipos={tipos} marcas={marcas} />
+      <VehicleForm tipos={tipos} marcas={marcas} empresas={empresas} />
 
       <ul className="space-y-2">
         {vehiculos.map((v) => (
@@ -81,6 +86,21 @@ export default async function VehiculosPage() {
                 <p className="text-xs text-slate-400">
                   {v.patente} · {v.marca || "—"} {v.modelo || ""}{" "}
                   {v.anio ? `· ${v.anio}` : ""}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {v.capacidad_tanque_litros != null
+                    ? `Tanque ${fmtNumber(v.capacidad_tanque_litros, 0)} L`
+                    : "Tanque —"}
+                  {v.consumo_promedio_asignado != null
+                    ? ` · ${fmtNumber(v.consumo_promedio_asignado, 1)} km/l ref.`
+                    : ""}
+                  {v.es_alquilado
+                    ? ` · Alquilado${
+                        v.empresa_id && empresaPorId.get(v.empresa_id)
+                          ? ` (${empresaPorId.get(v.empresa_id)})`
+                          : ""
+                      }`
+                    : ""}
                 </p>
               </div>
               <form action={toggleVehiculo}>
@@ -100,6 +120,8 @@ export default async function VehiculosPage() {
               tipos={tipos}
               seleccionados={combPorVehiculo.get(v.id) || []}
             />
+
+            <VehicleDataEditor vehiculo={v} empresas={empresas} />
           </li>
         ))}
         {vehiculos.length === 0 ? (

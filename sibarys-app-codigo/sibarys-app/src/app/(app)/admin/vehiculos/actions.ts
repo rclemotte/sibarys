@@ -32,6 +32,16 @@ export async function crearVehiculo(
   const modelo = String(formData.get("modelo") || "").trim() || null;
   const anioRaw = formData.get("anio");
   const anio = anioRaw && String(anioRaw).trim() ? Number(anioRaw) : null;
+  const capRaw = formData.get("capacidad_tanque_litros");
+  const capacidad_tanque_litros =
+    capRaw && String(capRaw).trim() ? Number(capRaw) : null;
+  const consRaw = formData.get("consumo_promedio_asignado");
+  const consumo_promedio_asignado =
+    consRaw && String(consRaw).trim() ? Number(consRaw) : null;
+  const es_alquilado = formData.get("es_alquilado") === "on";
+  const empresa_id = es_alquilado
+    ? String(formData.get("empresa_id") || "").trim() || null
+    : null;
   const combustibles = formData.getAll("combustibles").map(String);
 
   if (!patente) return { error: "Ingresá la patente." };
@@ -41,7 +51,17 @@ export async function crearVehiculo(
 
   const { data: veh, error } = await supabase
     .from("vehiculos")
-    .insert({ patente, nombre, marca, modelo, anio })
+    .insert({
+      patente,
+      nombre,
+      marca,
+      modelo,
+      anio,
+      capacidad_tanque_litros,
+      consumo_promedio_asignado,
+      es_alquilado,
+      empresa_id,
+    })
     .select("id")
     .single();
 
@@ -80,6 +100,34 @@ export async function guardarCombustibles(formData: FormData) {
       }))
     );
   }
+  revalidatePath("/admin/vehiculos");
+}
+
+export async function guardarDatosVehiculo(formData: FormData) {
+  const { supabase, ok } = await requireAdmin();
+  if (!ok) return;
+  const id = String(formData.get("vehiculo_id"));
+
+  const capRaw = formData.get("capacidad_tanque_litros");
+  const capacidad_tanque_litros =
+    capRaw && String(capRaw).trim() ? Number(capRaw) : null;
+  const consRaw = formData.get("consumo_promedio_asignado");
+  const consumo_promedio_asignado =
+    consRaw && String(consRaw).trim() ? Number(consRaw) : null;
+  const es_alquilado = formData.get("es_alquilado") === "on";
+  const empresa_id = es_alquilado
+    ? String(formData.get("empresa_id") || "").trim() || null
+    : null;
+
+  await supabase
+    .from("vehiculos")
+    .update({
+      capacidad_tanque_litros,
+      consumo_promedio_asignado,
+      es_alquilado,
+      empresa_id,
+    })
+    .eq("id", id);
   revalidatePath("/admin/vehiculos");
 }
 
