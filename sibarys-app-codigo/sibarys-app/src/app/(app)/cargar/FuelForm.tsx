@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { crearCarga, type CargarState } from "./actions";
 import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
+import Combobox from "@/components/Combobox";
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -27,12 +28,25 @@ export default function FuelForm({
   const [vehiculoId, setVehiculoId] = useState("");
   const [tipoId, setTipoId] = useState("");
   const [precio, setPrecio] = useState("");
+  const [estacionId, setEstacionId] = useState("");
 
   const vehiculo = useMemo(
     () => vehiculos.find((v) => v.id === vehiculoId),
     [vehiculos, vehiculoId]
   );
   const combustibles = vehiculo?.combustibles ?? [];
+
+  // Opciones del buscador de estación (memorizadas para no reiniciar el texto)
+  const opcionesEstaciones = useMemo(
+    () =>
+      estaciones.map((e) => ({
+        id: e.id,
+        nombre: `${e.nombre}${
+          e.emblema_nombre ? ` — ${e.emblema_nombre}` : ""
+        }${e.localidad ? ` (${e.localidad})` : ""}`,
+      })),
+    [estaciones]
+  );
 
   // Al cambiar de vehículo: si tiene un solo combustible, lo autoselecciona
   useEffect(() => {
@@ -55,6 +69,7 @@ export default function FuelForm({
       setVehiculoId("");
       setTipoId("");
       setPrecio("");
+      setEstacionId("");
       if (typeof window !== "undefined")
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -186,24 +201,17 @@ export default function FuelForm({
             />
           </div>
           <div>
-            <label className="label" htmlFor="estacion_id">
+            <label className="label">
               Estación <span className="text-slate-300">(opc.)</span>
             </label>
-            <select
-              id="estacion_id"
-              name="estacion_id"
-              className="field"
-              defaultValue=""
-            >
-              <option value="">Sin especificar</option>
-              {estaciones.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nombre}
-                  {e.emblema_nombre ? ` — ${e.emblema_nombre}` : ""}
-                  {e.localidad ? ` (${e.localidad})` : ""}
-                </option>
-              ))}
-            </select>
+            <input type="hidden" name="estacion_id" value={estacionId} />
+            <Combobox
+              options={opcionesEstaciones}
+              value={estacionId}
+              onChange={setEstacionId}
+              placeholder="Buscar estación…"
+              allLabel="Sin especificar"
+            />
           </div>
         </div>
 
