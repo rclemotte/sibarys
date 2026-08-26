@@ -255,11 +255,15 @@ export default function FuelForm({
           </label>
           <input
             id="registrado_en"
-            name="registrado_en"
             type="datetime-local"
-            className="field"
-            defaultValue={hoy}
+            className="field cursor-not-allowed bg-slate-100 text-slate-500"
+            value={hoy}
+            disabled
+            readOnly
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            Se registra automáticamente con la fecha y hora del momento.
+          </p>
         </div>
 
         <label className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
