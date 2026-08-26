@@ -30,17 +30,17 @@ export default function LoginPage() {
 
         <form action={formAction} className="card space-y-4">
           <div>
-            <label className="label" htmlFor="email">
-              Email
+            <label className="label" htmlFor="cedula">
+              Cédula
             </label>
             <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
+              id="cedula"
+              name="cedula"
+              type="text"
+              autoComplete="username"
+              inputMode="numeric"
               className="field"
-              placeholder="chofer@sibarys.com"
+              placeholder="Ej. 12345678"
               required
             />
           </div>

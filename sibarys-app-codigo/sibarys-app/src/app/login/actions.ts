@@ -3,20 +3,22 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { cedulaAEmail } from "@/lib/auth";
 
 export async function login(_prev: unknown, formData: FormData) {
-  const email = String(formData.get("email") || "").trim();
+  const cedula = String(formData.get("cedula") || "").trim();
   const password = String(formData.get("password") || "");
 
-  if (!email || !password) {
-    return { error: "Ingresá tu email y contraseña." };
+  if (!cedula || !password) {
+    return { error: "Ingresá tu cédula y contraseña." };
   }
 
+  const email = cedulaAEmail(cedula);
   const supabase = createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Email o contraseña incorrectos." };
+    return { error: "Cédula o contraseña incorrectos." };
   }
 
   revalidatePath("/", "layout");

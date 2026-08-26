@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Perfil } from "@/lib/types";
-import { fmtDate } from "@/lib/format";
 import AdminNav from "@/components/AdminNav";
 import NuevoUsuarioForm from "./NuevoUsuarioForm";
 import { cambiarRol, toggleActivo } from "./actions";
@@ -50,8 +49,8 @@ export default async function ChoferesPage() {
                 {p.nombre_completo || "(sin nombre)"}
               </p>
               <p className="text-xs text-slate-400">
-                {p.rol === "admin" ? "Administrador" : "Chofer"} · alta{" "}
-                {fmtDate(p.creado_en)}
+                {p.cedula ? `Cédula ${p.cedula} · ` : ""}
+                {p.rol === "admin" ? "Administrador" : "Chofer"}
                 {!p.activo ? " · inactivo" : ""}
               </p>
             </div>

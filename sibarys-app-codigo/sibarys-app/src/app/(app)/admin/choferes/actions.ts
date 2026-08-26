@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { cedulaAEmail, normalizarCedula } from "@/lib/auth";
 
 async function esAdmin(
   supabase: ReturnType<typeof createClient>,
@@ -31,16 +32,18 @@ export async function crearUsuario(
     return { error: "Solo el administrador puede crear usuarios." };
 
   const nombre = String(formData.get("nombre_completo") || "").trim();
-  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const cedula = normalizarCedula(String(formData.get("cedula") || ""));
   const password = String(formData.get("password") || "");
   const rol = String(formData.get("rol") || "chofer");
 
   if (!nombre) return { error: "Ingresá el nombre." };
-  if (!email) return { error: "Ingresá el email." };
+  if (!cedula) return { error: "Ingresá la cédula (solo números)." };
   if (password.length < 6)
     return { error: "La contraseña debe tener al menos 6 caracteres." };
   if (rol !== "chofer" && rol !== "admin")
     return { error: "Rol inválido." };
+
+  const email = cedulaAEmail(cedula);
 
   // 2) Crear el usuario con la clave secreta (solo en el servidor)
   let admin;
@@ -57,7 +60,12 @@ export async function crearUsuario(
     email,
     password,
     email_confirm: true, // queda confirmado, puede iniciar sesión ya
-    user_metadata: { nombre_completo: nombre, rol },
+    user_metadata: {
+      nombre_completo: nombre,
+      rol,
+      cedula,
+      debe_cambiar_password: true,
+    },
   });
 
   if (error) {
@@ -65,19 +73,26 @@ export async function crearUsuario(
       error.message?.toLowerCase().includes("already") ||
       (error as any).code === "email_exists"
     )
-      return { error: "Ya existe un usuario con ese email." };
+      return { error: "Ya existe un usuario con esa cédula." };
     return { error: "No se pudo crear el usuario: " + error.message };
   }
 
-  // 3) Asegurar el perfil con nombre y rol (por si el trigger no alcanzó a tomarlos)
+  // 3) Asegurar el perfil (por si el trigger no alcanzó a tomar los metadatos)
   if (data.user) {
-    await admin
-      .from("perfiles")
-      .upsert({ id: data.user.id, nombre_completo: nombre, rol, activo: true });
+    await admin.from("perfiles").upsert({
+      id: data.user.id,
+      nombre_completo: nombre,
+      cedula,
+      rol,
+      activo: true,
+      debe_cambiar_password: true,
+    });
   }
 
   revalidatePath("/admin/choferes");
-  return { success: `Usuario ${email} creado como ${rol}.` };
+  return {
+    success: `Usuario creado (cédula ${cedula}). En su primer ingreso deberá cambiar la contraseña.`,
+  };
 }
 
 export async function cambiarRol(formData: FormData) {

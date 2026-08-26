@@ -22,8 +22,11 @@ export default async function AppLayout({
     .eq("id", user.id)
     .single<Perfil>();
 
+  // Primer ingreso: obligar a cambiar la contraseña antes de usar la app
+  if (perfil?.debe_cambiar_password) redirect("/cambiar-password");
+
   const isAdmin = perfil?.rol === "admin";
-  const name = perfil?.nombre_completo || user.email;
+  const name = perfil?.nombre_completo || perfil?.cedula || user.email;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col">

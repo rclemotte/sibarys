@@ -48,13 +48,13 @@ export default function NuevoUsuarioForm() {
       </div>
 
       <div>
-        <label className="label">Email</label>
+        <label className="label">Cédula</label>
         <input
-          name="email"
-          type="email"
-          inputMode="email"
+          name="cedula"
+          type="text"
+          inputMode="numeric"
           className="field"
-          placeholder="juan@sibarys.com"
+          placeholder="Ej. 12345678"
           required
         />
       </div>
@@ -81,7 +81,8 @@ export default function NuevoUsuarioForm() {
       </div>
 
       <p className="text-xs text-slate-400">
-        Anotá la contraseña y pasásela al usuario. Después él puede cambiarla.
+        El usuario entra con su cédula y esta contraseña. En su primer ingreso
+        deberá elegir una nueva.
       </p>
 
       {state.error ? (

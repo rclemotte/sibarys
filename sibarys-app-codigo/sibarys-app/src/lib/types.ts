@@ -3,8 +3,10 @@ export type Rol = "chofer" | "admin";
 export interface Perfil {
   id: string;
   nombre_completo: string | null;
+  cedula: string | null;
   rol: Rol;
   activo: boolean;
+  debe_cambiar_password: boolean;
   creado_en: string;
 }
 
