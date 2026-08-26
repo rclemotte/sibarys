@@ -20,9 +20,7 @@ export async function crearCarga(
     String(formData.get("tipo_combustible_id") || "") || null;
   const odometro_km = Number(formData.get("odometro_km"));
   const litros = Number(formData.get("litros"));
-  const precioRaw = formData.get("precio_litro");
-  const precio_litro =
-    precioRaw && String(precioRaw).trim() !== "" ? Number(precioRaw) : null;
+  const total = Number(formData.get("total"));
   const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
   const notas = String(formData.get("notas") || "").trim() || null;
   const tanque_lleno = formData.get("tanque_lleno") === "on";
@@ -36,6 +34,12 @@ export async function crearCarga(
   if (!odometro_km || odometro_km <= 0)
     return { error: "Ingresá un kilometraje válido." };
   if (!litros || litros <= 0) return { error: "Ingresá los litros cargados." };
+  if (!total || total <= 0)
+    return { error: "Ingresá el total cargado ($)." };
+
+  // Precio por litro = total pagado ÷ litros cargados
+  const precio_litro = Math.round((total / litros) * 100) / 100;
+  const costo_total = total;
 
   // El odómetro no puede ser menor al de la última carga del vehículo
   const { data: ultima } = await supabase
@@ -77,6 +81,7 @@ export async function crearCarga(
     odometro_km,
     litros,
     precio_litro,
+    costo_total,
     estacion,
     estacion_id,
     notas,

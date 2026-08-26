@@ -27,7 +27,8 @@ export default function FuelForm({
 
   const [vehiculoId, setVehiculoId] = useState("");
   const [tipoId, setTipoId] = useState("");
-  const [precio, setPrecio] = useState("");
+  const [litros, setLitros] = useState("");
+  const [total, setTotal] = useState("");
   const [estacionId, setEstacionId] = useState("");
 
   const vehiculo = useMemo(
@@ -35,6 +36,14 @@ export default function FuelForm({
     [vehiculos, vehiculoId]
   );
   const combustibles = vehiculo?.combustibles ?? [];
+
+  // Precio por litro = total ÷ litros (se calcula solo)
+  const precioLitro = useMemo(() => {
+    const l = Number(litros);
+    const t = Number(total);
+    if (l > 0 && t > 0) return t / l;
+    return null;
+  }, [litros, total]);
 
   // Opciones del buscador de estación (memorizadas para no reiniciar el texto)
   const opcionesEstaciones = useMemo(
@@ -57,18 +66,13 @@ export default function FuelForm({
     }
   }, [vehiculoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Al elegir combustible: prefill del precio vigente
-  useEffect(() => {
-    const c = combustibles.find((x) => x.id === tipoId);
-    if (c?.precio_vigente != null) setPrecio(String(c.precio_vigente));
-  }, [tipoId]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     if (state.success) {
       formRef.current?.reset();
       setVehiculoId("");
       setTipoId("");
-      setPrecio("");
+      setLitros("");
+      setTotal("");
       setEstacionId("");
       if (typeof window !== "undefined")
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -135,7 +139,6 @@ export default function FuelForm({
             {combustibles.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nombre}
-                {c.precio_vigente != null ? ` — $${c.precio_vigente}/L` : ""}
               </option>
             ))}
           </select>
@@ -177,6 +180,8 @@ export default function FuelForm({
               min="0"
               className="field"
               placeholder="Ej. 45.5"
+              value={litros}
+              onChange={(e) => setLitros(e.target.value)}
               required
             />
           </div>
@@ -184,35 +189,58 @@ export default function FuelForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label" htmlFor="precio_litro">
-              Precio/litro
+            <label className="label" htmlFor="total">
+              Total cargado ($)
             </label>
             <input
-              id="precio_litro"
-              name="precio_litro"
+              id="total"
+              name="total"
               type="number"
               inputMode="decimal"
               step="0.01"
               min="0"
               className="field"
-              placeholder="Ej. 1150"
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
+              placeholder="Ej. 46000"
+              value={total}
+              onChange={(e) => setTotal(e.target.value)}
+              required
             />
           </div>
           <div>
-            <label className="label">
-              Estación <span className="text-slate-300">(opc.)</span>
-            </label>
-            <input type="hidden" name="estacion_id" value={estacionId} />
-            <Combobox
-              options={opcionesEstaciones}
-              value={estacionId}
-              onChange={setEstacionId}
-              placeholder="Buscar estación…"
-              allLabel="Sin especificar"
+            <label className="label">Precio/litro</label>
+            <input
+              type="text"
+              className="field bg-slate-50 text-slate-600"
+              value={
+                precioLitro != null
+                  ? precioLitro.toLocaleString("es-AR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : ""
+              }
+              placeholder="Automático"
+              readOnly
+              tabIndex={-1}
             />
+            <p className="mt-1 text-[11px] text-slate-400">
+              Se calcula: Total ÷ Litros
+            </p>
           </div>
+        </div>
+
+        <div>
+          <label className="label">
+            Estación <span className="text-slate-300">(opc.)</span>
+          </label>
+          <input type="hidden" name="estacion_id" value={estacionId} />
+          <Combobox
+            options={opcionesEstaciones}
+            value={estacionId}
+            onChange={setEstacionId}
+            placeholder="Buscar estación…"
+            allLabel="Sin especificar"
+          />
         </div>
 
         <div>
