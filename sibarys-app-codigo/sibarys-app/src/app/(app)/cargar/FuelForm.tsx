@@ -6,6 +6,12 @@ import { crearCarga, type CargarState } from "./actions";
 import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
 import Combobox from "@/components/Combobox";
 
+// Muestra un número entero con separadores de miles (ej. 250000 -> "250.000")
+function fmtMiles(raw: string): string {
+  if (!raw) return "";
+  return Number(raw).toLocaleString("es-AR");
+}
+
 function Submit() {
   const { pending } = useFormStatus();
   return (
@@ -27,8 +33,9 @@ export default function FuelForm({
 
   const [vehiculoId, setVehiculoId] = useState("");
   const [tipoId, setTipoId] = useState("");
+  const [odometro, setOdometro] = useState(""); // solo dígitos
   const [litros, setLitros] = useState("");
-  const [total, setTotal] = useState("");
+  const [total, setTotal] = useState(""); // solo dígitos
   const [estacionId, setEstacionId] = useState("");
 
   const vehiculo = useMemo(
@@ -71,6 +78,7 @@ export default function FuelForm({
       formRef.current?.reset();
       setVehiculoId("");
       setTipoId("");
+      setOdometro("");
       setLitros("");
       setTotal("");
       setEstacionId("");
@@ -152,18 +160,18 @@ export default function FuelForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label" htmlFor="odometro_km">
+            <label className="label" htmlFor="odometro_view">
               Kilometraje
             </label>
+            <input type="hidden" name="odometro_km" value={odometro} />
             <input
-              id="odometro_km"
-              name="odometro_km"
-              type="number"
-              inputMode="decimal"
-              step="0.1"
-              min="0"
+              id="odometro_view"
+              type="text"
+              inputMode="numeric"
               className="field"
-              placeholder="Ej. 154320"
+              placeholder="Ej. 154.320"
+              value={fmtMiles(odometro)}
+              onChange={(e) => setOdometro(e.target.value.replace(/\D/g, ""))}
               required
             />
           </div>
@@ -189,20 +197,18 @@ export default function FuelForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label" htmlFor="total">
+            <label className="label" htmlFor="total_view">
               Total cargado ($)
             </label>
+            <input type="hidden" name="total" value={total} />
             <input
-              id="total"
-              name="total"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
+              id="total_view"
+              type="text"
+              inputMode="numeric"
               className="field"
-              placeholder="Ej. 46000"
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
+              placeholder="Ej. 46.000"
+              value={fmtMiles(total)}
+              onChange={(e) => setTotal(e.target.value.replace(/\D/g, ""))}
               required
             />
           </div>
