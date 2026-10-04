@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtDateTime, hoyLocal, inicioDelDiaLocal } from "@/lib/format";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/client";
@@ -28,9 +29,12 @@ export default function ExportPanel({
     if (choferId) q = q.eq("chofer_id", choferId);
     if (vehiculoId) q = q.eq("vehiculo_id", vehiculoId);
     if (desde)
-      q = q.gte("registrado_en", new Date(desde + "T00:00:00").toISOString());
+      q = q.gte("registrado_en", inicioDelDiaLocal(desde).toISOString());
     if (hasta)
-      q = q.lte("registrado_en", new Date(hasta + "T23:59:59").toISOString());
+      q = q.lt(
+        "registrado_en",
+        new Date(inicioDelDiaLocal(hasta).getTime() + 86400000).toISOString()
+      );
     const { data, error } = await q.order("registrado_en", {
       ascending: false,
     });
@@ -48,7 +52,7 @@ export default function ExportPanel({
         return;
       }
       const filas = cargas.map((r) => ({
-        Fecha: new Date(r.registrado_en).toLocaleString("es-AR"),
+        Fecha: fmtDateTime(r.registrado_en),
         Vehículo: r.vehiculo_nombre,
         Patente: r.patente,
         Chofer: r.chofer_nombre ?? "",
@@ -71,7 +75,7 @@ export default function ExportPanel({
       ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cargas");
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = hoyLocal();
       XLSX.writeFile(wb, `sibarys-cargas-${hoy}.xlsx`);
       setInfo({ tipo: "ok", msg: `${cargas.length} carga(s) exportada(s).` });
     } catch (e: any) {

@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Consumo } from "@/lib/types";
-import { fmtNumber, fmtMoney, fmtDate } from "@/lib/format";
+import {
+  fmtNumber,
+  fmtMoney,
+  fmtDate,
+  inicioDelDiaLocal,
+  inicioDelMesLocal,
+} from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -28,9 +34,8 @@ function Kpi({
 export default async function DashboardPage() {
   const supabase = createClient();
 
-  const inicioMes = new Date();
-  inicioMes.setDate(1);
-  inicioMes.setHours(0, 0, 0, 0);
+  // Inicio del mes y del día en hora de Paraguay (el servidor está en UTC)
+  const inicioMes = inicioDelMesLocal();
 
   const { data: rows } = await supabase
     .from("consumo")
@@ -46,8 +51,7 @@ export default async function DashboardPage() {
   // una carga de hoy es 15% peor (menos km/l) que esa referencia.
   const UMBRAL_PEOR = 0.15;
 
-  const inicioHoy = new Date();
-  inicioHoy.setHours(0, 0, 0, 0);
+  const inicioHoy = inicioDelDiaLocal();
 
   const cargasHoy = cargas.filter(
     (r) =>

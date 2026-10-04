@@ -1,5 +1,6 @@
 "use client";
 
+import { hoyLocal } from "@/lib/format";
 import { useEffect, useRef } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { agregarPrecio, type TarifaState } from "./actions";
@@ -41,7 +42,7 @@ export default function TarifaForms({ tipos }: { tipos: TipoCombustible[] }) {
     if (state.success) ref.current?.reset();
   }, [state.success]);
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = hoyLocal();
 
   return (
     <form ref={ref} action={action} className="card space-y-3">

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Consumo } from "@/lib/types";
-import { fmtNumber } from "@/lib/format";
+import { fmtNumber, ZONA_HORARIA } from "@/lib/format";
 import { TrendChart, VehicleLitersChart } from "./Charts";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,7 @@ export default async function ReportesPage() {
     .filter((r) => r.km_por_litro != null)
     .map((r) => ({
       label: new Date(r.registrado_en).toLocaleDateString("es-AR", {
+        timeZone: ZONA_HORARIA,
         day: "2-digit",
         month: "2-digit",
       }),

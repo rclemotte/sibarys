@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { guardarDatosVehiculo } from "./actions";
+import { useFormState, useFormStatus } from "react-dom";
+import { guardarDatosVehiculo, type VehState } from "./actions";
 import type { Empresa, Vehiculo } from "@/lib/types";
+
+function Guardar() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className="btn-primary w-full py-2 text-sm"
+      disabled={pending}
+    >
+      {pending ? "Guardando…" : "Guardar datos"}
+    </button>
+  );
+}
 
 export default function VehicleDataEditor({
   vehiculo,
@@ -13,6 +27,10 @@ export default function VehicleDataEditor({
 }) {
   const [open, setOpen] = useState(false);
   const [alquilado, setAlquilado] = useState(vehiculo.es_alquilado);
+  const [state, action] = useFormState<VehState, FormData>(
+    guardarDatosVehiculo,
+    {}
+  );
 
   return (
     <div className="mt-2 border-t border-slate-100 pt-2">
@@ -20,12 +38,32 @@ export default function VehicleDataEditor({
         onClick={() => setOpen((o) => !o)}
         className="text-xs font-medium text-brand"
       >
-        {open ? "Cerrar datos" : "Editar datos (tanque, consumo, alquiler)"}
+        {open ? "Cerrar datos" : "Editar datos (patente, nombre, tanque, consumo, alquiler)"}
       </button>
 
       {open ? (
-        <form action={guardarDatosVehiculo} className="mt-2 space-y-3">
+        <form action={action} className="mt-2 space-y-3">
           <input type="hidden" name="vehiculo_id" value={vehiculo.id} />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="label">Patente</label>
+              <input
+                name="patente"
+                className="field uppercase"
+                defaultValue={vehiculo.patente}
+                required
+              />
+            </div>
+            <div>
+              <label className="label">Nombre</label>
+              <input
+                name="nombre"
+                className="field"
+                defaultValue={vehiculo.nombre}
+                required
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="label">Capacidad tanque (L)</label>
@@ -85,13 +123,18 @@ export default function VehicleDataEditor({
             ) : null}
           </div>
 
-          <button
-            type="submit"
-            onClick={() => setTimeout(() => setOpen(false), 100)}
-            className="btn-primary w-full py-2 text-sm"
-          >
-            Guardar datos
-          </button>
+          {state.error ? (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+              {state.error}
+            </p>
+          ) : null}
+          {state.success ? (
+            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              {state.success}
+            </p>
+          ) : null}
+
+          <Guardar />
         </form>
       ) : null}
     </div>

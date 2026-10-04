@@ -1,5 +1,6 @@
 "use client";
 
+import { fechaHoraLocalInput } from "@/lib/format";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { crearCarga, type CargarState } from "./actions";
@@ -87,7 +88,7 @@ export default function FuelForm({
     }
   }, [state.success]);
 
-  const hoy = new Date().toISOString().slice(0, 16);
+  const hoy = fechaHoraLocalInput();
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">

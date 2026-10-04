@@ -1,5 +1,6 @@
 "use client";
 
+import { fmtDateTime, hoyLocal } from "@/lib/format";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/client";
@@ -28,7 +29,7 @@ export default function ExportarExcel() {
       }
 
       const filas = cargas.map((r) => ({
-        Fecha: new Date(r.registrado_en).toLocaleString("es-AR"),
+        Fecha: fmtDateTime(r.registrado_en),
         Vehículo: r.vehiculo_nombre,
         Patente: r.patente,
         Chofer: r.chofer_nombre ?? "",
@@ -53,7 +54,7 @@ export default function ExportarExcel() {
       ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cargas");
-      const fecha = new Date().toISOString().slice(0, 10);
+      const fecha = hoyLocal();
       XLSX.writeFile(wb, `sibarys-cargas-${fecha}.xlsx`);
     } finally {
       setCargando(false);

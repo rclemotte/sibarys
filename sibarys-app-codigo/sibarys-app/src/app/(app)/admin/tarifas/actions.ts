@@ -1,5 +1,6 @@
 "use server";
 
+import { hoyLocal } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -30,7 +31,7 @@ export async function agregarPrecio(
   const precio = Number(formData.get("precio"));
   const vigente_desde =
     String(formData.get("vigente_desde") || "") ||
-    new Date().toISOString().slice(0, 10);
+    hoyLocal();
 
   if (!tipo_combustible_id) return { error: "Elegí el combustible." };
   if (!precio || precio <= 0) return { error: "Ingresá un precio válido." };

@@ -103,10 +103,21 @@ export async function guardarCombustibles(formData: FormData) {
   revalidatePath("/admin/vehiculos");
 }
 
-export async function guardarDatosVehiculo(formData: FormData) {
+export async function guardarDatosVehiculo(
+  _prev: VehState,
+  formData: FormData
+): Promise<VehState> {
   const { supabase, ok } = await requireAdmin();
-  if (!ok) return;
+  if (!ok) return { error: "Solo el administrador puede editar vehículos." };
   const id = String(formData.get("vehiculo_id"));
+
+  // Patente y nombre (la patente puede cambiar, ej. de chapa provisoria a definitiva)
+  const patente = String(formData.get("patente") || "")
+    .trim()
+    .toUpperCase();
+  const nombre = String(formData.get("nombre") || "").trim();
+  if (!patente) return { error: "Ingresá la patente." };
+  if (!nombre) return { error: "Ingresá el nombre del vehículo." };
 
   const capRaw = formData.get("capacidad_tanque_litros");
   const capacidad_tanque_litros =
@@ -119,16 +130,26 @@ export async function guardarDatosVehiculo(formData: FormData) {
     ? String(formData.get("empresa_id") || "").trim() || null
     : null;
 
-  await supabase
+  const { error } = await supabase
     .from("vehiculos")
     .update({
+      patente,
+      nombre,
       capacidad_tanque_litros,
       consumo_promedio_asignado,
       es_alquilado,
       empresa_id,
     })
     .eq("id", id);
+
+  if (error) {
+    if (error.code === "23505")
+      return { error: "Ya existe otro vehículo con esa patente." };
+    return { error: "No se pudo guardar: " + error.message };
+  }
+
   revalidatePath("/admin/vehiculos");
+  return { success: "Datos guardados." };
 }
 
 export async function toggleVehiculo(formData: FormData) {
