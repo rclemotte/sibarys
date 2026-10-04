@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { esAdminRol, textoRol } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import LogoutButton from "@/components/LogoutButton";
@@ -25,10 +26,10 @@ export default async function AppLayout({
   // Primer ingreso: obligar a cambiar la contraseña antes de usar la app.
   // Solo para administradores: a los choferes la contraseña se la pone el
   // admin y no se les pide cambiarla.
-  if (perfil?.rol === "admin" && perfil?.debe_cambiar_password)
+  if (esAdminRol(perfil?.rol) && perfil?.debe_cambiar_password)
     redirect("/cambiar-password");
 
-  const isAdmin = perfil?.rol === "admin";
+  const isAdmin = esAdminRol(perfil?.rol);
   const name = perfil?.nombre_completo || perfil?.cedula || user.email;
 
   return (
@@ -41,7 +42,7 @@ export default async function AppLayout({
           <div className="leading-tight">
             <p className="text-sm font-semibold">{name}</p>
             <p className="text-[11px] text-slate-400">
-              {isAdmin ? "Administrador" : "Chofer"}
+              {textoRol(perfil?.rol)}
             </p>
           </div>
         </div>

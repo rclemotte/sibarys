@@ -1,21 +1,34 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const tabs = [
-  { href: "/admin/vehiculos", label: "Vehículos" },
-  { href: "/admin/combustibles", label: "Combustibles" },
-  { href: "/admin/marcas", label: "Marcas" },
-  { href: "/admin/empresas", label: "Empresas" },
-  { href: "/admin/emblemas", label: "Emblemas" },
-  { href: "/admin/estaciones", label: "Estaciones" },
-  { href: "/admin/choferes", label: "Choferes" },
-  { href: "/admin/exportar", label: "Exportar" },
-];
+import { createClient } from "@/lib/supabase/client";
+import { ADMIN_TABS } from "@/lib/adminTabs";
+import { tienePermiso, type PerfilConPermisos } from "@/lib/permisos";
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const [perfil, setPerfil] = useState<PerfilConPermisos | null>(null);
+
+  // Trae el perfil para mostrar solo las secciones que el usuario puede usar
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from("perfiles")
+        .select("*")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }) => setPerfil((data as PerfilConPermisos) ?? null));
+    });
+  }, []);
+
+  const tabs = perfil
+    ? ADMIN_TABS.filter((t) => !t.permiso || tienePermiso(perfil, t.permiso))
+    : ADMIN_TABS;
+
   return (
     <div className="mb-2 flex flex-wrap gap-2">
       {tabs.map((t) => {

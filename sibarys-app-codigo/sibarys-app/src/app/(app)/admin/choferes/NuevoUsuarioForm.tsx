@@ -13,7 +13,11 @@ function Submit() {
   );
 }
 
-export default function NuevoUsuarioForm() {
+export default function NuevoUsuarioForm({
+  puedeCrearAdmin = false,
+}: {
+  puedeCrearAdmin?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [state, action] = useFormState<NuevoUsuarioState, FormData>(
     crearUsuario,
@@ -75,7 +79,9 @@ export default function NuevoUsuarioForm() {
           <label className="label">Rol</label>
           <select name="rol" className="field" defaultValue="chofer">
             <option value="chofer">Chofer</option>
-            <option value="admin">Administrador</option>
+            {puedeCrearAdmin ? (
+              <option value="admin">Administrador</option>
+            ) : null}
           </select>
         </div>
       </div>

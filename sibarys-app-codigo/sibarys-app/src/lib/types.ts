@@ -1,4 +1,4 @@
-export type Rol = "chofer" | "admin";
+export type Rol = "chofer" | "admin" | "superadmin";
 
 export interface Perfil {
   id: string;
@@ -8,6 +8,11 @@ export interface Perfil {
   activo: boolean;
   debe_cambiar_password: boolean;
   creado_en: string;
+  // Permisos de edición (solo aplican a rol "admin"; el superadmin puede todo)
+  puede_editar_vehiculos?: boolean;
+  puede_corregir_km?: boolean;
+  puede_gestionar_usuarios?: boolean;
+  puede_editar_catalogos?: boolean;
 }
 
 export interface TipoCombustible {

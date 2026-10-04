@@ -1,5 +1,6 @@
 "use server";
 
+import { esAdminRol } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,10 +12,10 @@ async function requireAdmin() {
   if (!user) return { supabase, ok: false as const };
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
-  return { supabase, ok: perfil?.rol === "admin" };
+  return { supabase, ok: esAdminRol(perfil?.rol) };
 }
 
 export type AsigState = { error?: string; success?: string };
@@ -24,7 +25,7 @@ export async function crearAsignacion(
   formData: FormData
 ): Promise<AsigState> {
   const { supabase, ok } = await requireAdmin();
-  if (!ok) return { error: "Solo el administrador puede asignar vehículos." };
+  if (!ok) return { error: "No tenés permiso para asignar vehículos." };
 
   const vehiculo_id = String(formData.get("vehiculo_id") || "");
   const chofer_id = String(formData.get("chofer_id") || "");

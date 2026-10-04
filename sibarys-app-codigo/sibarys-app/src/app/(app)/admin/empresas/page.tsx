@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Empresa } from "@/lib/types";
 import AdminNav from "@/components/AdminNav";
@@ -16,14 +17,14 @@ export default async function EmpresasPage() {
 
   const { data: yo } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
 
-  if (yo?.rol !== "admin") {
+  if (!tienePermiso(yo, "puede_editar_catalogos")) {
     return (
       <div className="card text-center text-sm text-slate-500">
-        Esta sección es solo para administradores.
+        No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
   }

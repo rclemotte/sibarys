@@ -1,5 +1,6 @@
 "use server";
 
+import { tienePermiso } from "@/lib/permisos";
 import { hoyLocal } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -12,10 +13,10 @@ async function requireAdmin() {
   if (!user) return { supabase, user: null, ok: false as const };
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
-  return { supabase, user, ok: perfil?.rol === "admin" };
+  return { supabase, user, ok: tienePermiso(perfil, "puede_editar_catalogos") };
 }
 
 export type TarifaState = { error?: string; success?: string };
@@ -25,7 +26,7 @@ export async function agregarPrecio(
   formData: FormData
 ): Promise<TarifaState> {
   const { supabase, user, ok } = await requireAdmin();
-  if (!ok) return { error: "Solo el administrador puede gestionar tarifas." };
+  if (!ok) return { error: "No tenés permiso para gestionar tarifas." };
 
   const tipo_combustible_id = String(formData.get("tipo_combustible_id") || "");
   const precio = Number(formData.get("precio"));

@@ -1,5 +1,6 @@
 "use server";
 
+import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -22,11 +23,11 @@ export async function corregirOdometro(
 
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
-  if (perfil?.rol !== "admin")
-    return { error: "Solo el administrador puede corregir el kilometraje." };
+  if (!tienePermiso(perfil, "puede_corregir_km"))
+    return { error: "No tenés permiso para corregir el kilometraje." };
 
   const id = String(formData.get("id") || "");
   const nuevoKm = Number(

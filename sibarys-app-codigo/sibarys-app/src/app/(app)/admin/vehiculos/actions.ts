@@ -1,5 +1,6 @@
 "use server";
 
+import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,10 +12,10 @@ async function requireAdmin() {
   if (!user) return { supabase, ok: false as const };
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
-  return { supabase, ok: perfil?.rol === "admin" };
+  return { supabase, ok: tienePermiso(perfil, "puede_editar_vehiculos") };
 }
 
 export type VehState = { error?: string; success?: string };
@@ -24,7 +25,7 @@ export async function crearVehiculo(
   formData: FormData
 ): Promise<VehState> {
   const { supabase, ok } = await requireAdmin();
-  if (!ok) return { error: "Solo el administrador puede agregar vehículos." };
+  if (!ok) return { error: "No tenés permiso para agregar vehículos." };
 
   const patente = String(formData.get("patente") || "").trim().toUpperCase();
   const nombre = String(formData.get("nombre") || "").trim();
@@ -108,7 +109,7 @@ export async function guardarDatosVehiculo(
   formData: FormData
 ): Promise<VehState> {
   const { supabase, ok } = await requireAdmin();
-  if (!ok) return { error: "Solo el administrador puede editar vehículos." };
+  if (!ok) return { error: "No tenés permiso para editar vehículos." };
   const id = String(formData.get("vehiculo_id"));
 
   // Patente y nombre (la patente puede cambiar, ej. de chapa provisoria a definitiva)

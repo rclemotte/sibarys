@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { tienePermiso } from "@/lib/permisos";
 import type { Consumo } from "@/lib/types";
 import { fmtNumber, fmtMoney, fmtDateTime } from "@/lib/format";
 import CorregirOdometroForm from "./CorregirOdometroForm";
@@ -12,10 +13,10 @@ export default async function HistorialPage() {
   } = await supabase.auth.getUser();
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user!.id)
     .single();
-  const esAdmin = perfil?.rol === "admin";
+  const puedeCorregir = tienePermiso(perfil, "puede_corregir_km");
 
   const { data } = await supabase
     .from("consumo")
@@ -118,7 +119,7 @@ export default async function HistorialPage() {
                   </p>
                 ) : null}
 
-                {esAdmin ? (
+                {puedeCorregir ? (
                   <CorregirOdometroForm
                     id={r.id}
                     odometroActual={Number(r.odometro_km)}

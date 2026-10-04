@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { esAdminRol } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Perfil, Vehiculo } from "@/lib/types";
 import AdminNav from "@/components/AdminNav";
@@ -19,7 +20,7 @@ export default async function ExportarPage() {
     .eq("id", user.id)
     .single();
 
-  if (yo?.rol !== "admin") {
+  if (!esAdminRol(yo?.rol)) {
     return (
       <div className="card text-center text-sm text-slate-500">
         Esta sección es solo para administradores.

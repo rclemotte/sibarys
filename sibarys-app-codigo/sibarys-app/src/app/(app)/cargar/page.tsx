@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { esAdminRol } from "@/lib/permisos";
 import type {
   VehiculoParaCarga,
   PrecioVigente,
@@ -19,7 +20,7 @@ export default async function CargarPage() {
     .select("rol")
     .eq("id", user!.id)
     .single();
-  const esAdmin = perfil?.rol === "admin";
+  const esAdmin = esAdminRol(perfil?.rol);
 
   // 1) Vehículos disponibles: todos los activos, para admin y choferes
   //    (cualquier chofer puede cargar en cualquier vehículo; no hay asignaciones)

@@ -1,5 +1,6 @@
 "use server";
 
+import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,10 +12,10 @@ async function requireAdmin() {
   if (!user) return { supabase, ok: false as const };
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
-  return { supabase, ok: perfil?.rol === "admin" };
+  return { supabase, ok: tienePermiso(perfil, "puede_editar_catalogos") };
 }
 
 export type EstacionState = { error?: string; success?: string };
@@ -25,7 +26,7 @@ export async function crearEstacion(
 ): Promise<EstacionState> {
   const { supabase, ok } = await requireAdmin();
   if (!ok)
-    return { error: "Solo el administrador puede gestionar estaciones." };
+    return { error: "No tenés permiso para gestionar estaciones." };
 
   const nombre = String(formData.get("nombre") || "").trim();
   const localidad = String(formData.get("localidad") || "").trim() || null;

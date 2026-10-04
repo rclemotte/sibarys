@@ -12,7 +12,7 @@ const base: Item[] = [
   { href: "/reportes", label: "Reportes", icon: "📊" },
 ];
 
-const adminItem: Item = { href: "/admin/vehiculos", label: "Admin", icon: "⚙️" };
+const adminItem: Item = { href: "/admin", label: "Admin", icon: "⚙️" };
 
 export default function BottomNav({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();

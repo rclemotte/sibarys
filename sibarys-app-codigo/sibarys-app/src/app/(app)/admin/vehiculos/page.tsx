@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Vehiculo, TipoCombustible, Marca, Empresa } from "@/lib/types";
 import AdminNav from "@/components/AdminNav";
@@ -19,14 +20,14 @@ export default async function VehiculosPage() {
 
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user.id)
     .single();
 
-  if (perfil?.rol !== "admin") {
+  if (!tienePermiso(perfil, "puede_editar_vehiculos")) {
     return (
       <div className="card text-center text-sm text-slate-500">
-        Esta sección es solo para administradores.
+        No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
   }

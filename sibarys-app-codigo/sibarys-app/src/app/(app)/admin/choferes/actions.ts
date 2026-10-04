@@ -4,17 +4,45 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cedulaAEmail, normalizarCedula } from "@/lib/auth";
+import {
+  PERMISOS,
+  esSuperadmin,
+  perfilActual,
+  tienePermiso,
+  type PerfilConPermisos,
+} from "@/lib/permisos";
 
-async function esAdmin(
+/** Quién llama: tiene que ser superadmin o admin con permiso de usuarios. */
+async function gestor() {
+  const supabase = createClient();
+  const yo = await perfilActual(supabase);
+  const ok = tienePermiso(yo, "puede_gestionar_usuarios");
+  return { supabase, yo, ok, esSuper: esSuperadmin(yo?.rol) };
+}
+
+/**
+ * ¿"yo" puede tocar (baja, contraseña) a "otro"?
+ * El superadmin a cualquiera; un admin, solo a choferes.
+ */
+function puedeTocar(
+  yo: PerfilConPermisos | null,
+  otro: { rol: string | null } | null
+): boolean {
+  if (!yo || !otro) return false;
+  if (esSuperadmin(yo.rol)) return true;
+  return otro.rol === "chofer";
+}
+
+async function rolDe(
   supabase: ReturnType<typeof createClient>,
-  uid: string
-) {
+  id: string
+): Promise<{ rol: string | null } | null> {
   const { data } = await supabase
     .from("perfiles")
     .select("rol")
-    .eq("id", uid)
-    .single();
-  return data?.rol === "admin";
+    .eq("id", id)
+    .maybeSingle();
+  return data ?? null;
 }
 
 export type NuevoUsuarioState = { error?: string; success?: string };
@@ -23,13 +51,9 @@ export async function crearUsuario(
   _prev: NuevoUsuarioState,
   formData: FormData
 ): Promise<NuevoUsuarioState> {
-  // 1) Verificar que quien llama es admin
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || !(await esAdmin(supabase, user.id)))
-    return { error: "Solo el administrador puede crear usuarios." };
+  // 1) Verificar que quien llama puede gestionar usuarios
+  const { ok, esSuper } = await gestor();
+  if (!ok) return { error: "No tenés permiso para crear usuarios." };
 
   const nombre = String(formData.get("nombre_completo") || "").trim();
   const cedula = normalizarCedula(String(formData.get("cedula") || ""));
@@ -42,6 +66,8 @@ export async function crearUsuario(
     return { error: "La contraseña debe tener al menos 6 caracteres." };
   if (rol !== "chofer" && rol !== "admin")
     return { error: "Rol inválido." };
+  if (rol === "admin" && !esSuper)
+    return { error: "Solo el súper admin puede crear administradores." };
 
   const email = cedulaAEmail(cedula);
 
@@ -105,14 +131,14 @@ export async function asignarPassword(
   _prev: AsignarPasswordState,
   formData: FormData
 ): Promise<AsignarPasswordState> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || !(await esAdmin(supabase, user.id)))
-    return { error: "Solo el administrador puede cambiar contraseñas." };
+  const { supabase, yo, ok } = await gestor();
+  if (!ok) return { error: "No tenés permiso para cambiar contraseñas." };
 
   const id = String(formData.get("id") || "");
+  if (!puedeTocar(yo, await rolDe(supabase, id)))
+    return {
+      error: "Solo el súper admin puede cambiar la contraseña de un administrador.",
+    };
   const password = String(formData.get("password") || "");
   if (!id) return { error: "Usuario inválido." };
   if (password.length < 6)
@@ -141,29 +167,46 @@ export async function asignarPassword(
   return { success: "Contraseña actualizada." };
 }
 
+/** Chofer <-> Admin. Solo el superadmin. No aplica a superadmins ni a uno mismo. */
 export async function cambiarRol(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || !(await esAdmin(supabase, user.id))) return;
+  const { supabase, yo, esSuper } = await gestor();
+  if (!esSuper || !yo) return;
 
   const id = String(formData.get("id"));
-  const rol = String(formData.get("rol"));
-  const siguiente = rol === "admin" ? "chofer" : "admin";
+  if (id === yo.id) return;
+  const otro = await rolDe(supabase, id);
+  if (!otro || esSuperadmin(otro.rol)) return;
+
+  const siguiente = otro.rol === "admin" ? "chofer" : "admin";
   await supabase.from("perfiles").update({ rol: siguiente }).eq("id", id);
   revalidatePath("/admin/choferes");
 }
 
 export async function toggleActivo(formData: FormData) {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || !(await esAdmin(supabase, user.id))) return;
+  const { supabase, yo, ok } = await gestor();
+  if (!ok || !yo) return;
 
   const id = String(formData.get("id"));
+  if (id === yo.id) return; // nadie se da de baja a sí mismo
+  if (!puedeTocar(yo, await rolDe(supabase, id))) return;
+
   const activo = formData.get("activo") === "true";
   await supabase.from("perfiles").update({ activo: !activo }).eq("id", id);
+  revalidatePath("/admin/choferes");
+}
+
+/** El superadmin define qué puede editar un admin. */
+export async function guardarPermisos(formData: FormData) {
+  const { supabase, esSuper } = await gestor();
+  if (!esSuper) return;
+
+  const id = String(formData.get("id"));
+  const otro = await rolDe(supabase, id);
+  if (otro?.rol !== "admin") return;
+
+  const cambios: Record<string, boolean> = {};
+  for (const p of PERMISOS) cambios[p.campo] = formData.get(p.campo) === "on";
+
+  await supabase.from("perfiles").update(cambios).eq("id", id);
   revalidatePath("/admin/choferes");
 }
