@@ -64,7 +64,7 @@ export async function crearUsuario(
       nombre_completo: nombre,
       rol,
       cedula,
-      debe_cambiar_password: true,
+      debe_cambiar_password: false,
     },
   });
 
@@ -85,14 +85,60 @@ export async function crearUsuario(
       cedula,
       rol,
       activo: true,
-      debe_cambiar_password: true,
+      debe_cambiar_password: false,
     });
   }
 
   revalidatePath("/admin/choferes");
   return {
-    success: `Usuario creado (cédula ${cedula}). En su primer ingreso deberá cambiar la contraseña.`,
+    success: `Usuario creado. Entra con la cédula ${cedula} y la contraseña que le asignaste.`,
   };
+}
+
+export type AsignarPasswordState = { error?: string; success?: string };
+
+/**
+ * El admin le pone (o le cambia) la contraseña a un usuario.
+ * No se le pide al usuario que la cambie después: entra directo con esta.
+ */
+export async function asignarPassword(
+  _prev: AsignarPasswordState,
+  formData: FormData
+): Promise<AsignarPasswordState> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || !(await esAdmin(supabase, user.id)))
+    return { error: "Solo el administrador puede cambiar contraseñas." };
+
+  const id = String(formData.get("id") || "");
+  const password = String(formData.get("password") || "");
+  if (!id) return { error: "Usuario inválido." };
+  if (password.length < 6)
+    return { error: "La contraseña debe tener al menos 6 caracteres." };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      error:
+        "Falta configurar SUPABASE_SERVICE_ROLE_KEY en el servidor. Revisá el .env.local.",
+    };
+  }
+
+  const { error } = await admin.auth.admin.updateUserById(id, { password });
+  if (error)
+    return { error: "No se pudo cambiar la contraseña: " + error.message };
+
+  await admin
+    .from("perfiles")
+    .update({ debe_cambiar_password: false })
+    .eq("id", id);
+
+  revalidatePath("/admin/choferes");
+  return { success: "Contraseña actualizada." };
 }
 
 export async function cambiarRol(formData: FormData) {

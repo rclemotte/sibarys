@@ -61,7 +61,7 @@ export default function NuevoUsuarioForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Contraseña inicial</label>
+          <label className="label">Contraseña</label>
           <input
             name="password"
             type="text"
@@ -81,8 +81,8 @@ export default function NuevoUsuarioForm() {
       </div>
 
       <p className="text-xs text-slate-400">
-        El usuario entra con su cédula y esta contraseña. En su primer ingreso
-        deberá elegir una nueva.
+        El usuario entra con su cédula y esta contraseña. No se le pide
+        cambiarla.
       </p>
 
       {state.error ? (

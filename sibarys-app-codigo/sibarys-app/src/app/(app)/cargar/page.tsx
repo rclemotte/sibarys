@@ -21,22 +21,13 @@ export default async function CargarPage() {
     .single();
   const esAdmin = perfil?.rol === "admin";
 
-  // 1) Vehículos disponibles: admin ve todos; chofer, solo los asignados
-  let vehiculoIds: string[] = [];
-  if (esAdmin) {
-    const { data } = await supabase
-      .from("vehiculos")
-      .select("id")
-      .eq("activo", true);
-    vehiculoIds = (data || []).map((v) => v.id as string);
-  } else {
-    const { data } = await supabase
-      .from("asignaciones")
-      .select("vehiculo_id")
-      .eq("chofer_id", user!.id)
-      .eq("activo", true);
-    vehiculoIds = (data || []).map((a) => a.vehiculo_id as string);
-  }
+  // 1) Vehículos disponibles: todos los activos, para admin y choferes
+  //    (cualquier chofer puede cargar en cualquier vehículo; no hay asignaciones)
+  const { data: activos } = await supabase
+    .from("vehiculos")
+    .select("id")
+    .eq("activo", true);
+  const vehiculoIds: string[] = (activos || []).map((v) => v.id as string);
 
   // Estaciones de servicio activas (para el desplegable de la carga)
   const { data: estData } = await supabase
@@ -123,7 +114,7 @@ export default async function CargarPage() {
         <div className="card text-center text-sm text-slate-500">
           {esAdmin
             ? "No hay vehículos cargados. Agregá la flota en Admin → Vehículos."
-            : "No tenés vehículos asignados. Pedile al administrador que te asigne uno."}
+            : "Todavía no hay vehículos cargados. Avisale al administrador."}
         </div>
       ) : (
         <FuelForm vehiculos={vehiculos} estaciones={estaciones} />

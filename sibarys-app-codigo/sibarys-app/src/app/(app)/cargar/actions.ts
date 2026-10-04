@@ -41,18 +41,31 @@ export async function crearCarga(
   const precio_litro = Math.round((total / litros) * 100) / 100;
   const costo_total = total;
 
-  // El odómetro no puede ser menor al de la última carga del vehículo
-  const { data: ultima } = await supabase
-    .from("cargas")
-    .select("odometro_km")
-    .eq("vehiculo_id", vehiculo_id)
-    .order("odometro_km", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // El odómetro no puede ser menor al de la última carga del vehículo.
+  // Como ahora varios choferes usan el mismo vehículo, se consulta con
+  // ultimo_odometro() (ve las cargas de todos). Si esa función todavía no
+  // existe en la base, se usa la consulta directa (solo ve las propias).
+  let ultimoKm: number | null = null;
+  const { data: rpcKm, error: rpcError } = await supabase.rpc(
+    "ultimo_odometro",
+    { p_vehiculo_id: vehiculo_id }
+  );
+  if (!rpcError) {
+    ultimoKm = rpcKm === null || rpcKm === undefined ? null : Number(rpcKm);
+  } else {
+    const { data: ultima } = await supabase
+      .from("cargas")
+      .select("odometro_km")
+      .eq("vehiculo_id", vehiculo_id)
+      .order("odometro_km", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    ultimoKm = ultima ? Number(ultima.odometro_km) : null;
+  }
 
-  if (ultima && odometro_km < Number(ultima.odometro_km)) {
+  if (ultimoKm !== null && odometro_km < ultimoKm) {
     return {
-      error: `El kilometraje (${odometro_km}) es menor al de la última carga (${ultima.odometro_km}). Revisá el número.`,
+      error: `El kilometraje (${odometro_km}) es menor al de la última carga (${ultimoKm}). Revisá el número.`,
     };
   }
 
