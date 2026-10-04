@@ -134,6 +134,11 @@ export interface Consumo {
   distancia_km: number | null;
   km_por_litro: number | null;
   litros_por_100km: number | null;
+  // Corrección manual del odómetro (si el admin la corrigió)
+  odometro_original?: number | null;
+  odometro_corregido_motivo?: string | null;
+  odometro_corregido_por_nombre?: string | null;
+  odometro_corregido_en?: string | null;
 }
 
 /** Vehículo con sus combustibles permitidos (para el formulario de carga) */
