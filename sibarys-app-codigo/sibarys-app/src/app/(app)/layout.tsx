@@ -22,8 +22,11 @@ export default async function AppLayout({
     .eq("id", user.id)
     .single<Perfil>();
 
-  // Primer ingreso: obligar a cambiar la contraseña antes de usar la app
-  if (perfil?.debe_cambiar_password) redirect("/cambiar-password");
+  // Primer ingreso: obligar a cambiar la contraseña antes de usar la app.
+  // Solo para administradores: a los choferes la contraseña se la pone el
+  // admin y no se les pide cambiarla.
+  if (perfil?.rol === "admin" && perfil?.debe_cambiar_password)
+    redirect("/cambiar-password");
 
   const isAdmin = perfil?.rol === "admin";
   const name = perfil?.nombre_completo || perfil?.cedula || user.email;
