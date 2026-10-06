@@ -89,7 +89,8 @@ export interface Vehiculo {
   capacidad_tanque_litros: number | null;
   es_alquilado: boolean;
   empresa_id: string | null;
-  consumo_promedio_asignado: number | null;
+  consumo_promedio_asignado: number | null; // viejo, en km/l (ya no se usa)
+  consumo_ref_l100km?: number | null; // consumo de referencia en L/100 km
   activo: boolean;
   creado_en: string;
 }

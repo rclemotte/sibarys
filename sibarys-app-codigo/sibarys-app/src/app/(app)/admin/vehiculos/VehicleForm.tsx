@@ -101,15 +101,15 @@ export default function VehicleForm({
           />
         </div>
         <div>
-          <label className="label">Consumo prom. (km/l)</label>
+          <label className="label">Consumo prom. (L/100 km)</label>
           <input
-            name="consumo_promedio_asignado"
+            name="consumo_ref_l100km"
             type="number"
             inputMode="decimal"
             step="0.01"
             min="0"
             className="field"
-            placeholder="Ej. 12.5"
+            placeholder="Ej. 9.5"
           />
         </div>
       </div>

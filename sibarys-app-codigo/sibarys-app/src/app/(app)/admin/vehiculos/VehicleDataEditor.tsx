@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { guardarDatosVehiculo, type VehState } from "./actions";
 import type { Empresa, Vehiculo } from "@/lib/types";
+import { referenciaL100 } from "@/lib/consumo";
 
 function Guardar() {
   const { pending } = useFormStatus();
@@ -79,16 +80,16 @@ export default function VehicleDataEditor({
               />
             </div>
             <div>
-              <label className="label">Consumo prom. (km/l)</label>
+              <label className="label">Consumo prom. (L/100 km)</label>
               <input
-                name="consumo_promedio_asignado"
+                name="consumo_ref_l100km"
                 type="number"
                 inputMode="decimal"
                 step="0.01"
                 min="0"
                 className="field"
-                defaultValue={vehiculo.consumo_promedio_asignado ?? ""}
-                placeholder="Ej. 12.5"
+                defaultValue={referenciaL100(vehiculo) ?? ""}
+                placeholder="Ej. 9.5"
               />
             </div>
           </div>

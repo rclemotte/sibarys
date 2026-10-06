@@ -12,8 +12,8 @@ import {
   CartesianGrid,
 } from "recharts";
 
-export type TrendPoint = { label: string; kmPerLiter: number };
-export type VehicleBar = { name: string; liters: number; avgKmL: number | null };
+export type TrendPoint = { label: string; l100: number };
+export type VehicleBar = { name: string; liters: number; avgL100: number | null };
 
 export function TrendChart({ data }: { data: TrendPoint[] }) {
   if (data.length === 0)
@@ -29,12 +29,12 @@ export function TrendChart({ data }: { data: TrendPoint[] }) {
         <XAxis dataKey="label" tick={{ fontSize: 11 }} />
         <YAxis tick={{ fontSize: 11 }} />
         <Tooltip
-          formatter={(v: number) => [`${v} km/l`, "Consumo"]}
+          formatter={(v: number) => [`${v} L/100 km`, "Consumo"]}
           contentStyle={{ borderRadius: 12, fontSize: 12 }}
         />
         <Line
           type="monotone"
-          dataKey="kmPerLiter"
+          dataKey="l100"
           stroke="#0f766e"
           strokeWidth={2}
           dot={{ r: 3 }}

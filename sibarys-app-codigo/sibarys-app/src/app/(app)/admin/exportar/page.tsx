@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { Perfil, Vehiculo } from "@/lib/types";
 import AdminNav from "@/components/AdminNav";
 import ExportPanel from "./ExportPanel";
+import ExportCatalogos from "./ExportCatalogos";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,18 @@ export default async function ExportarPage() {
       </div>
 
       <ExportPanel choferes={choferes} vehiculos={vehiculos} />
+
+      <div>
+        <h2 className="text-base font-semibold text-slate-700">
+          Exportar catálogos a Excel
+        </h2>
+        <p className="text-sm text-slate-500">
+          Vehículos, estaciones, choferes y demás listas, cada una en su
+          archivo o todas juntas.
+        </p>
+      </div>
+
+      <ExportCatalogos />
     </div>
   );
 }

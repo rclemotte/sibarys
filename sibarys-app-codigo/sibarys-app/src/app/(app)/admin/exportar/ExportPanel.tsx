@@ -62,7 +62,6 @@ export default function ExportPanel({
         Litros: Number(r.litros),
         "Precio/L": r.precio_litro != null ? Number(r.precio_litro) : "",
         "Costo total": r.costo_total != null ? Number(r.costo_total) : "",
-        "km/l": r.km_por_litro != null ? Number(r.km_por_litro) : "",
         "L/100km": r.litros_por_100km != null ? Number(r.litros_por_100km) : "",
         "Tanque lleno": r.tanque_lleno ? "Sí" : "No",
         Estación: r.estacion ?? "",
@@ -71,7 +70,7 @@ export default function ExportPanel({
       ws["!cols"] = [
         { wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 20 }, { wch: 16 },
         { wch: 13 }, { wch: 13 }, { wch: 8 }, { wch: 10 }, { wch: 12 },
-        { wch: 8 }, { wch: 9 }, { wch: 11 }, { wch: 16 },
+        { wch: 9 }, { wch: 11 }, { wch: 16 },
       ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cargas");

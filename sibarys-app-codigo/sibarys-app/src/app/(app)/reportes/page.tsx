@@ -19,22 +19,22 @@ export default async function ReportesPage() {
 
   const cargas = (data || []) as Consumo[];
 
-  // Tendencia de consumo (km/l) en el tiempo
+  // Tendencia de consumo (L/100 km) en el tiempo
   const trend = cargas
-    .filter((r) => r.km_por_litro != null)
+    .filter((r) => r.litros_por_100km != null)
     .map((r) => ({
       label: new Date(r.registrado_en).toLocaleDateString("es-AR", {
         timeZone: ZONA_HORARIA,
         day: "2-digit",
         month: "2-digit",
       }),
-      kmPerLiter: Number(r.km_por_litro),
+      l100: Number(r.litros_por_100km),
     }));
 
   // Agregado por vehículo
   const porVehiculo = new Map<
     string,
-    { name: string; liters: number; kmlSum: number; kmlCount: number }
+    { name: string; liters: number; l100Sum: number; l100Count: number }
   >();
   for (const r of cargas) {
     const key = r.vehiculo_id;
@@ -42,13 +42,13 @@ export default async function ReportesPage() {
       porVehiculo.get(key) || {
         name: r.vehiculo_nombre,
         liters: 0,
-        kmlSum: 0,
-        kmlCount: 0,
+        l100Sum: 0,
+        l100Count: 0,
       };
     cur.liters += Number(r.litros);
-    if (r.km_por_litro != null) {
-      cur.kmlSum += Number(r.km_por_litro);
-      cur.kmlCount += 1;
+    if (r.litros_por_100km != null) {
+      cur.l100Sum += Number(r.litros_por_100km);
+      cur.l100Count += 1;
     }
     porVehiculo.set(key, cur);
   }
@@ -57,7 +57,7 @@ export default async function ReportesPage() {
     .map((v) => ({
       name: v.name,
       liters: Math.round(v.liters),
-      avgKmL: v.kmlCount > 0 ? v.kmlSum / v.kmlCount : null,
+      avgL100: v.l100Count > 0 ? v.l100Sum / v.l100Count : null,
     }))
     .sort((a, b) => b.liters - a.liters);
 
@@ -70,7 +70,7 @@ export default async function ReportesPage() {
 
       <div className="card">
         <h2 className="mb-2 text-sm font-semibold text-slate-600">
-          Consumo en el tiempo (km/l)
+          Consumo en el tiempo (L/100 km)
         </h2>
         <TrendChart data={trend} />
       </div>
@@ -92,7 +92,7 @@ export default async function ReportesPage() {
               <tr className="text-left text-xs uppercase text-slate-400">
                 <th className="pb-2">Vehículo</th>
                 <th className="pb-2 text-right">Litros</th>
-                <th className="pb-2 text-right">Prom. km/l</th>
+                <th className="pb-2 text-right">Prom. L/100 km</th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +101,7 @@ export default async function ReportesPage() {
                   <td className="py-2">{v.name}</td>
                   <td className="py-2 text-right">{fmtNumber(v.liters)}</td>
                   <td className="py-2 text-right">
-                    {v.avgKmL != null ? fmtNumber(v.avgKmL, 1) : "—"}
+                    {v.avgL100 != null ? fmtNumber(v.avgL100, 1) : "—"}
                   </td>
                 </tr>
               ))}

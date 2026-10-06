@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { referenciaL100 } from "@/lib/consumo";
 import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Vehiculo, TipoCombustible, Marca, Empresa } from "@/lib/types";
@@ -92,8 +93,8 @@ export default async function VehiculosPage() {
                   {v.capacidad_tanque_litros != null
                     ? `Tanque ${fmtNumber(v.capacidad_tanque_litros, 0)} L`
                     : "Tanque —"}
-                  {v.consumo_promedio_asignado != null
-                    ? ` · ${fmtNumber(v.consumo_promedio_asignado, 1)} km/l ref.`
+                  {referenciaL100(v) != null
+                    ? ` · ${fmtNumber(referenciaL100(v), 1)} L/100 km ref.`
                     : ""}
                   {v.es_alquilado
                     ? ` · Alquilado${

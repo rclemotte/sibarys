@@ -80,7 +80,10 @@ export default function NuevoUsuarioForm({
           <select name="rol" className="field" defaultValue="chofer">
             <option value="chofer">Chofer</option>
             {puedeCrearAdmin ? (
-              <option value="admin">Administrador</option>
+              <>
+                <option value="admin">Administrador</option>
+                <option value="superadmin">Súper admin</option>
+              </>
             ) : null}
           </select>
         </div>

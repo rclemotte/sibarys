@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { referenciaL100 } from "@/lib/consumo";
 import { createClient } from "@/lib/supabase/server";
 import type { Consumo } from "@/lib/types";
 import {
@@ -46,22 +47,22 @@ export default async function DashboardPage() {
   const cargas = (rows || []) as Consumo[];
 
   // ---- Alerta de consumo alto de HOY (chofer) ------------------------------
-  // Referencia por vehículo: consumo_promedio_asignado (tipeado); si no está,
-  // cae al promedio histórico real del vehículo. Se avisa si el rendimiento de
-  // una carga de hoy es 15% peor (menos km/l) que esa referencia.
+  // Referencia por vehículo: consumo de referencia en L/100 km (tipeado); si no
+  // está, cae al promedio histórico real del vehículo. Se avisa si una carga de
+  // hoy consume 15% más (más L/100 km) que esa referencia.
   const UMBRAL_PEOR = 0.15;
 
   const inicioHoy = inicioDelDiaLocal();
 
   const cargasHoy = cargas.filter(
     (r) =>
-      r.km_por_litro != null &&
+      r.litros_por_100km != null &&
       new Date(r.registrado_en).getTime() >= inicioHoy.getTime()
   );
 
   const alertas: {
     vehiculo: string;
-    kmL: number;
+    l100: number;
     referencia: number;
   }[] = [];
 
@@ -70,28 +71,23 @@ export default async function DashboardPage() {
 
     const { data: vehData } = await supabase
       .from("vehiculos")
-      .select("id, consumo_promedio_asignado")
+      .select("*")
       .in("id", vehIds);
     const asignadoPorVeh = new Map<string, number | null>();
     (vehData || []).forEach((v: any) =>
-      asignadoPorVeh.set(
-        v.id,
-        v.consumo_promedio_asignado != null
-          ? Number(v.consumo_promedio_asignado)
-          : null
-      )
+      asignadoPorVeh.set(v.id, referenciaL100(v))
     );
 
     // Promedio histórico (respaldo) por vehículo
     const { data: histData } = await supabase
       .from("consumo")
-      .select("vehiculo_id, km_por_litro")
+      .select("vehiculo_id, litros_por_100km")
       .in("vehiculo_id", vehIds)
-      .not("km_por_litro", "is", null);
+      .not("litros_por_100km", "is", null);
     const acum = new Map<string, { suma: number; n: number }>();
     (histData || []).forEach((r: any) => {
       const a = acum.get(r.vehiculo_id) || { suma: 0, n: 0 };
-      a.suma += Number(r.km_por_litro);
+      a.suma += Number(r.litros_por_100km);
       a.n += 1;
       acum.set(r.vehiculo_id, a);
     });
@@ -108,10 +104,10 @@ export default async function DashboardPage() {
           ? hist.suma / hist.n
           : null;
       if (referencia == null || referencia <= 0) continue;
-      if (Number(r.km_por_litro) < referencia * (1 - UMBRAL_PEOR)) {
+      if (Number(r.litros_por_100km) > referencia * (1 + UMBRAL_PEOR)) {
         alertas.push({
           vehiculo: r.vehiculo_nombre,
-          kmL: Number(r.km_por_litro),
+          l100: Number(r.litros_por_100km),
           referencia,
         });
         yaAlertado.add(r.vehiculo_id);
@@ -121,10 +117,11 @@ export default async function DashboardPage() {
 
   const litrosMes = cargas.reduce((s, r) => s + Number(r.litros), 0);
   const costoMes = cargas.reduce((s, r) => s + Number(r.costo_total || 0), 0);
-  const conKmL = cargas.filter((r) => r.km_por_litro != null);
-  const promKmL =
-    conKmL.length > 0
-      ? conKmL.reduce((s, r) => s + Number(r.km_por_litro), 0) / conKmL.length
+  const conL100 = cargas.filter((r) => r.litros_por_100km != null);
+  const promL100 =
+    conL100.length > 0
+      ? conL100.reduce((s, r) => s + Number(r.litros_por_100km), 0) /
+        conL100.length
       : null;
 
   const recientes = cargas.slice(0, 5);
@@ -143,8 +140,8 @@ export default async function DashboardPage() {
               </p>
               {alertas.map((a, i) => (
                 <p key={i} className="text-xs text-amber-700">
-                  {a.vehiculo}: {fmtNumber(a.kmL, 1)} km/l (referencia{" "}
-                  {fmtNumber(a.referencia, 1)} km/l). Revisá la carga.
+                  {a.vehiculo}: {fmtNumber(a.l100, 1)} L/100 km (referencia{" "}
+                  {fmtNumber(a.referencia, 1)} L/100 km). Revisá la carga.
                 </p>
               ))}
             </div>
@@ -165,7 +162,9 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <Kpi
           label="Consumo prom."
-          value={promKmL != null ? `${fmtNumber(promKmL, 1)} km/l` : "—"}
+          value={
+            promL100 != null ? `${fmtNumber(promL100, 1)} L/100 km` : "—"
+          }
           hint="Promedio de cargas"
         />
         <Kpi label="Cargas" value={fmtNumber(cargas.length)} hint="En el mes" />
@@ -208,8 +207,8 @@ export default async function DashboardPage() {
                 <div className="text-right">
                   <p className="font-semibold">{fmtNumber(r.litros, 1)} L</p>
                   <p className="text-xs text-slate-400">
-                    {r.km_por_litro != null
-                      ? `${fmtNumber(r.km_por_litro, 1)} km/l`
+                    {r.litros_por_100km != null
+                      ? `${fmtNumber(r.litros_por_100km, 1)} L/100 km`
                       : "1ª carga"}
                   </p>
                 </div>

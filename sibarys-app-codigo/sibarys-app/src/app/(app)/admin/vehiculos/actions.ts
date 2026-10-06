@@ -36,8 +36,8 @@ export async function crearVehiculo(
   const capRaw = formData.get("capacidad_tanque_litros");
   const capacidad_tanque_litros =
     capRaw && String(capRaw).trim() ? Number(capRaw) : null;
-  const consRaw = formData.get("consumo_promedio_asignado");
-  const consumo_promedio_asignado =
+  const consRaw = formData.get("consumo_ref_l100km");
+  const consumo_ref_l100km =
     consRaw && String(consRaw).trim() ? Number(consRaw) : null;
   const es_alquilado = formData.get("es_alquilado") === "on";
   const empresa_id = es_alquilado
@@ -59,7 +59,7 @@ export async function crearVehiculo(
       modelo,
       anio,
       capacidad_tanque_litros,
-      consumo_promedio_asignado,
+      consumo_ref_l100km,
       es_alquilado,
       empresa_id,
     })
@@ -123,8 +123,8 @@ export async function guardarDatosVehiculo(
   const capRaw = formData.get("capacidad_tanque_litros");
   const capacidad_tanque_litros =
     capRaw && String(capRaw).trim() ? Number(capRaw) : null;
-  const consRaw = formData.get("consumo_promedio_asignado");
-  const consumo_promedio_asignado =
+  const consRaw = formData.get("consumo_ref_l100km");
+  const consumo_ref_l100km =
     consRaw && String(consRaw).trim() ? Number(consRaw) : null;
   const es_alquilado = formData.get("es_alquilado") === "on";
   const empresa_id = es_alquilado
@@ -137,7 +137,7 @@ export async function guardarDatosVehiculo(
       patente,
       nombre,
       capacidad_tanque_litros,
-      consumo_promedio_asignado,
+      consumo_ref_l100km,
       es_alquilado,
       empresa_id,
     })

@@ -64,9 +64,9 @@ export async function crearUsuario(
   if (!cedula) return { error: "Ingresá la cédula (solo números)." };
   if (password.length < 6)
     return { error: "La contraseña debe tener al menos 6 caracteres." };
-  if (rol !== "chofer" && rol !== "admin")
+  if (rol !== "chofer" && rol !== "admin" && rol !== "superadmin")
     return { error: "Rol inválido." };
-  if (rol === "admin" && !esSuper)
+  if (rol !== "chofer" && !esSuper)
     return { error: "Solo el súper admin puede crear administradores." };
 
   const email = cedulaAEmail(cedula);

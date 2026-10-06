@@ -41,8 +41,8 @@ export default async function HistorialPage() {
         <ul className="space-y-2">
           {cargas.map((r) => {
             const anomalia =
-              r.km_por_litro != null &&
-              (r.km_por_litro < 2 || r.km_por_litro > 30);
+              r.litros_por_100km != null &&
+              (r.litros_por_100km < 3 || r.litros_por_100km > 50);
             return (
               <li key={r.id} className="card">
                 <div className="flex items-start justify-between">
@@ -93,8 +93,8 @@ export default async function HistorialPage() {
                         anomalia ? "text-amber-600" : ""
                       }`}
                     >
-                      {r.km_por_litro != null
-                        ? `${fmtNumber(r.km_por_litro, 1)} km/l`
+                      {r.litros_por_100km != null
+                        ? `${fmtNumber(r.litros_por_100km, 1)} L/100 km`
                         : "1ª carga"}
                       {anomalia ? " ⚠️" : ""}
                     </p>
