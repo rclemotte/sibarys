@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export type CargarState = { error?: string; success?: string };
 
+const MINUTOS_DUPLICADO = 10;
+const MENSAJE_DUPLICADO =
+  "Esta carga ya fue registrada hace un momento (mismo vehículo, kilometraje y litros). Revisá el Historial antes de cargarla de nuevo.";
+
 export async function crearCarga(
   _prev: CargarState,
   formData: FormData
@@ -69,6 +73,20 @@ export async function crearCarga(
     };
   }
 
+  // Evitar cargas duplicadas: mismo vehículo, km y litros en los últimos
+  // minutos (ej. doble toque en "Guardar"). La base también lo controla.
+  const desde = new Date(Date.now() - MINUTOS_DUPLICADO * 60000).toISOString();
+  const { data: repetida } = await supabase
+    .from("cargas")
+    .select("id")
+    .eq("vehiculo_id", vehiculo_id)
+    .eq("odometro_km", odometro_km)
+    .eq("litros", litros)
+    .gte("creado_en", desde)
+    .limit(1)
+    .maybeSingle();
+  if (repetida) return { error: MENSAJE_DUPLICADO };
+
   // Si eligió una estación, componemos también el texto legacy "estacion"
   // (lo leen historial, reportes y exportar) para no tener que tocarlos.
   let estacion: string | null = null;
@@ -102,7 +120,11 @@ export async function crearCarga(
     registrado_en,
   });
 
-  if (error) return { error: "No se pudo guardar la carga: " + error.message };
+  if (error) {
+    if (error.message?.includes("CARGA_DUPLICADA"))
+      return { error: MENSAJE_DUPLICADO };
+    return { error: "No se pudo guardar la carga: " + error.message };
+  }
 
   revalidatePath("/dashboard");
   revalidatePath("/historial");

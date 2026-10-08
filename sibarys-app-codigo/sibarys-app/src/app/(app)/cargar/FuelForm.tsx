@@ -31,6 +31,12 @@ export default function FuelForm({
 }) {
   const [state, formAction] = useFormState<CargarState, FormData>(crearCarga, {});
   const formRef = useRef<HTMLFormElement>(null);
+  // Evita doble envío: un doble toque rápido en el celular puede mandar el
+  // formulario dos veces antes de que el botón llegue a bloquearse.
+  const enviando = useRef(false);
+  useEffect(() => {
+    enviando.current = false; // llegó la respuesta del servidor
+  }, [state]);
 
   const [vehiculoId, setVehiculoId] = useState("");
   const [tipoId, setTipoId] = useState("");
@@ -91,7 +97,18 @@ export default function FuelForm({
   const hoy = fechaHoraLocalInput();
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4">
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={(e) => {
+        if (enviando.current) {
+          e.preventDefault();
+          return;
+        }
+        enviando.current = true;
+      }}
+      className="space-y-4"
+    >
       {state.success ? (
         <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
           <span className="text-xl" aria-hidden="true">
