@@ -3,18 +3,27 @@
 import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { textoEstacion } from "@/lib/estaciones";
+import { fmtNumber } from "@/lib/format";
 
-export type CorregirState = { error?: string; success?: string };
+export type EditarState = { error?: string; success?: string };
+
+const num = (v: FormDataEntryValue | null) =>
+  Number(
+    String(v ?? "")
+      .trim()
+      .replace(",", "."),
+  );
 
 /**
- * El admin corrige el odómetro de una carga mal ingresada.
- * El motivo es obligatorio. El valor original se guarda la primera vez
- * que se corrige (si se corrige de nuevo, se conserva el original de verdad).
+ * Administración corrige los datos de una carga mal ingresada.
+ * El motivo es obligatorio y cada dato cambiado queda registrado en
+ * cargas_correcciones (valor anterior, nuevo, quién y cuándo).
  */
-export async function corregirOdometro(
-  _prev: CorregirState,
+export async function editarCarga(
+  _prev: EditarState,
   formData: FormData,
-): Promise<CorregirState> {
+): Promise<EditarState> {
   const supabase = createClient();
   const {
     data: { user },
@@ -27,47 +36,160 @@ export async function corregirOdometro(
     .eq("id", user.id)
     .single();
   if (!tienePermiso(perfil, "puede_corregir_km"))
-    return { error: "No tenés permiso para corregir el kilometraje." };
+    return { error: "No tenés permiso para editar cargas." };
 
   const id = String(formData.get("id") || "");
-  const nuevoKm = Number(
-    String(formData.get("odometro_km") || "")
-      .trim()
-      .replace(",", "."),
-  );
+  const vehiculo_id = String(formData.get("vehiculo_id") || "");
+  const tipo_combustible_id =
+    String(formData.get("tipo_combustible_id") || "") || null;
+  const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
+  const odometro_km = num(formData.get("odometro_km"));
+  const litros = num(formData.get("litros"));
+  const total = num(formData.get("total"));
+  const tanque_lleno = formData.get("tanque_lleno") === "on";
+  const notas = String(formData.get("notas") || "").trim() || null;
   const motivo = String(formData.get("motivo") || "").trim();
 
   if (!id) return { error: "Carga inválida." };
-  if (!Number.isFinite(nuevoKm) || nuevoKm <= 0)
+  if (!vehiculo_id) return { error: "Elegí el vehículo." };
+  if (!tipo_combustible_id) return { error: "Elegí el combustible." };
+  if (!Number.isFinite(odometro_km) || odometro_km <= 0)
     return { error: "Ingresá un kilometraje válido." };
+  if (!Number.isFinite(litros) || litros <= 0)
+    return { error: "Ingresá los litros." };
+  if (!Number.isFinite(total) || total <= 0)
+    return { error: "Ingresá el total cargado." };
   if (motivo.length < 3)
     return { error: "Escribí el motivo de la corrección." };
 
-  const { data: carga, error: errLeer } = await supabase
+  // Carga actual (para comparar y registrar qué cambió)
+  const { data: actual, error: errLeer } = await supabase
     .from("cargas")
-    .select("odometro_km, odometro_original")
+    .select(
+      "vehiculo_id, tipo_combustible_id, estacion_id, estacion, odometro_km, litros, costo_total, tanque_lleno, notas",
+    )
     .eq("id", id)
     .maybeSingle();
-  if (errLeer || !carga) return { error: "No se encontró la carga." };
+  if (errLeer || !actual) return { error: "No se encontró la carga." };
 
-  if (Number(carga.odometro_km) === nuevoKm)
-    return { error: "Es el mismo kilometraje que ya tiene." };
+  // Nombres para que el historial sea legible
+  const ids = (a: (string | null)[]) => a.filter(Boolean) as string[];
+  const [{ data: vs }, { data: ts }] = await Promise.all([
+    supabase
+      .from("vehiculos")
+      .select("id, nombre, patente")
+      .in("id", ids([actual.vehiculo_id, vehiculo_id])),
+    supabase
+      .from("tipos_combustible")
+      .select("id, nombre")
+      .in("id", ids([actual.tipo_combustible_id, tipo_combustible_id])),
+  ]);
+  const nomVeh = (vid: string | null) => {
+    const v = (vs || []).find((x: any) => x.id === vid);
+    return v ? `${v.nombre} (${v.patente})` : "—";
+  };
+  const nomComb = (tid: string | null) =>
+    (ts || []).find((x: any) => x.id === tid)?.nombre ?? "—";
 
+  const estacion = await textoEstacion(supabase, estacion_id);
+
+  const cambios: { campo: string; antes: string; despues: string }[] = [];
+  const comparar = (campo: string, antes: string, despues: string) => {
+    if (antes !== despues) cambios.push({ campo, antes, despues });
+  };
+  comparar("Vehículo", nomVeh(actual.vehiculo_id), nomVeh(vehiculo_id));
+  comparar(
+    "Combustible",
+    nomComb(actual.tipo_combustible_id),
+    nomComb(tipo_combustible_id),
+  );
+  comparar(
+    "Kilometraje",
+    fmtNumber(Number(actual.odometro_km), 1),
+    fmtNumber(odometro_km, 1),
+  );
+  comparar("Litros", fmtNumber(Number(actual.litros), 2), fmtNumber(litros, 2));
+  comparar(
+    "Total",
+    fmtNumber(Number(actual.costo_total), 0),
+    fmtNumber(total, 0),
+  );
+  if ((actual.estacion_id || null) !== estacion_id)
+    cambios.push({
+      campo: "Estación",
+      antes: actual.estacion || "Sin especificar",
+      despues: estacion || "Sin especificar",
+    });
+  comparar(
+    "Tanque lleno",
+    actual.tanque_lleno ? "Sí" : "No",
+    tanque_lleno ? "Sí" : "No",
+  );
+  comparar("Notas", actual.notas || "—", notas || "—");
+
+  if (cambios.length === 0) return { error: "No cambiaste ningún dato." };
+
+  // 1) Registrar las correcciones primero (si falla, no se toca la carga)
+  const ahora = new Date().toISOString();
+  const { data: registradas, error: errHist } = await supabase
+    .from("cargas_correcciones")
+    .insert(
+      cambios.map((c) => ({
+        carga_id: id,
+        campo: c.campo,
+        valor_anterior: c.antes,
+        valor_nuevo: c.despues,
+        motivo,
+        corregido_por: user.id,
+        corregido_en: ahora,
+      })),
+    )
+    .select("id");
+  if (errHist)
+    return {
+      error:
+        "No se pudo registrar la corrección. ¿Se corrió el SQL migracion_editar_cargas.sql? (" +
+        errHist.message +
+        ")",
+    };
+
+  // 2) Actualizar la carga
+  const precio_litro = Math.round((total / litros) * 100) / 100;
   const { error } = await supabase
     .from("cargas")
     .update({
-      odometro_km: nuevoKm,
-      odometro_original: carga.odometro_original ?? carga.odometro_km,
-      odometro_corregido_motivo: motivo,
-      odometro_corregido_por: user.id,
-      odometro_corregido_en: new Date().toISOString(),
+      vehiculo_id,
+      tipo_combustible_id,
+      estacion_id,
+      estacion,
+      odometro_km,
+      litros,
+      costo_total: total,
+      precio_litro,
+      tanque_lleno,
+      notas,
     })
     .eq("id", id);
 
-  if (error) return { error: "No se pudo corregir: " + error.message };
+  if (error) {
+    // No quedó editada: no dejar un historial de algo que no pasó
+    await supabase
+      .from("cargas_correcciones")
+      .delete()
+      .in(
+        "id",
+        (registradas || []).map((r: any) => r.id),
+      );
+    return { error: "No se pudo guardar: " + error.message };
+  }
 
   revalidatePath("/historial");
   revalidatePath("/dashboard");
   revalidatePath("/reportes");
-  return { success: "Kilometraje corregido." };
+  return {
+    success:
+      cambios.length === 1
+        ? "Carga corregida (1 dato)."
+        : `Carga corregida (${cambios.length} datos).`,
+  };
 }

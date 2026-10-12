@@ -1,5 +1,6 @@
 "use server";
 
+import { textoEstacion } from "@/lib/estaciones";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,23 +88,8 @@ export async function crearCarga(
     .maybeSingle();
   if (repetida) return { error: MENSAJE_DUPLICADO };
 
-  // Si eligió una estación, componemos también el texto legacy "estacion"
-  // (lo leen historial, reportes y exportar) para no tener que tocarlos.
-  let estacion: string | null = null;
-  if (estacion_id) {
-    const { data: est } = await supabase
-      .from("estaciones_servicio")
-      .select("nombre, localidad, emblemas(nombre)")
-      .eq("id", estacion_id)
-      .maybeSingle();
-    if (est) {
-      const emblema = (est as any).emblemas?.nombre as string | undefined;
-      estacion =
-        `${est.nombre}` +
-        (emblema ? ` (${emblema})` : "") +
-        (est.localidad ? ` · ${est.localidad}` : "");
-    }
-  }
+  // Texto legacy "estacion" (lo leen historial, reportes y exportar)
+  const estacion = await textoEstacion(supabase, estacion_id);
 
   const { error } = await supabase.from("cargas").insert({
     vehiculo_id,

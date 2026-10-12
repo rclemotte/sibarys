@@ -20,7 +20,7 @@ export const PERMISOS: { campo: Permiso; label: string }[] = [
     campo: "puede_editar_vehiculos",
     label: "Editar vehículos (alta, patente, tanque, consumo, combustibles)",
   },
-  { campo: "puede_corregir_km", label: "Corregir kilometraje de cargas" },
+  { campo: "puede_corregir_km", label: "Corregir datos de cargas (km, litros, total, etc.)" },
   {
     campo: "puede_gestionar_usuarios",
     label: "Crear y dar de baja choferes, cambiarles la contraseña",
