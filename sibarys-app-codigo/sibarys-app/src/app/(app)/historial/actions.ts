@@ -1,5 +1,6 @@
 "use server";
 
+import { errorLitrosTanque } from "@/lib/consumo";
 import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -61,6 +62,22 @@ export async function editarCarga(
     return { error: "Ingresá el total cargado." };
   if (motivo.length < 3)
     return { error: "Escribí el motivo de la corrección." };
+
+  // Los litros no pueden superar la capacidad del tanque (+10%)
+  const { data: vehNuevo } = await supabase
+    .from("vehiculos")
+    .select("nombre, capacidad_tanque_litros")
+    .eq("id", vehiculo_id)
+    .maybeSingle();
+  if (vehNuevo) {
+    const errTanque = errorLitrosTanque(litros, vehNuevo);
+    if (errTanque)
+      return {
+        error:
+          errTanque +
+          " Si realmente entra más, corregí la capacidad del tanque en Vehículos.",
+      };
+  }
 
   // Carga actual (para comparar y registrar qué cambió)
   const { data: actual, error: errLeer } = await supabase
