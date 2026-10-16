@@ -6,9 +6,11 @@ import {
   fmtNumber,
   fmtMoney,
   fmtDate,
+  hoyLocal,
   inicioDelDiaLocal,
   inicioDelMesLocal,
 } from "@/lib/format";
+import { semaforo, sumarDias } from "@/lib/reportes";
 
 export const dynamic = "force-dynamic";
 
@@ -46,82 +48,84 @@ export default async function DashboardPage() {
 
   const cargas = (rows || []) as Consumo[];
 
-  // ---- Alerta de consumo alto de HOY (chofer) ------------------------------
-  // Referencia por vehículo: consumo de referencia en L/100 km (tipeado); si no
-  // está, cae al promedio histórico real del vehículo. Se avisa si una carga de
-  // hoy consume 15% más (más L/100 km) que esa referencia.
-  const UMBRAL_PEOR = 0.15;
+  // ---- Alerta de consumo alto (mismo criterio que Reportes) -------------
+  // Por vehículo, con las cargas de los últimos 30 días: litros ÷ km de todos
+  // sus tramos. Solo se avisa cuando el vehículo ya cargó al menos 2 tanques
+  // en ese lapso (dato confiable) y su consumo supera en más de 25% su
+  // referencia. Cargas sueltas no disparan alertas.
+  const desde30 = inicioDelDiaLocal(sumarDias(hoyLocal(), -29)).toISOString();
+  const columnas = "vehiculo_id, vehiculo_nombre, litros, distancia_km";
+  let tramos: any[] = [];
+  const viaFuncion = await supabase
+    .rpc("reporte_consumo", { p_desde: desde30 })
+    .select(columnas);
+  if (!viaFuncion.error) {
+    tramos = (viaFuncion.data as any[]) || [];
+  } else {
+    const { data } = await supabase
+      .from("consumo")
+      .select(columnas)
+      .gte("registrado_en", desde30);
+    tramos = data || [];
+  }
 
-  const inicioHoy = inicioDelDiaLocal();
-
-  const cargasHoy = cargas.filter(
-    (r) =>
-      r.litros_por_100km != null &&
-      new Date(r.registrado_en).getTime() >= inicioHoy.getTime()
-  );
+  const porVeh = new Map<
+    string,
+    { nombre: string; litros: number; km: number }
+  >();
+  for (const r of tramos) {
+    const km = Number(r.distancia_km);
+    if (!(km > 0)) continue;
+    const a = porVeh.get(r.vehiculo_id) || {
+      nombre: r.vehiculo_nombre,
+      litros: 0,
+      km: 0,
+    };
+    a.litros += Number(r.litros) || 0;
+    a.km += km;
+    porVeh.set(r.vehiculo_id, a);
+  }
 
   const alertas: {
     vehiculo: string;
     l100: number;
     referencia: number;
+    km: number;
   }[] = [];
-
-  if (cargasHoy.length > 0) {
-    const vehIds = Array.from(new Set(cargasHoy.map((r) => r.vehiculo_id)));
-
+  if (porVeh.size > 0) {
     const { data: vehData } = await supabase
       .from("vehiculos")
       .select("*")
-      .in("id", vehIds);
-    const asignadoPorVeh = new Map<string, number | null>();
-    (vehData || []).forEach((v: any) =>
-      asignadoPorVeh.set(v.id, referenciaL100(v))
-    );
-
-    // Promedio histórico (respaldo) por vehículo
-    const { data: histData } = await supabase
-      .from("consumo")
-      .select("vehiculo_id, litros_por_100km")
-      .in("vehiculo_id", vehIds)
-      .not("litros_por_100km", "is", null);
-    const acum = new Map<string, { suma: number; n: number }>();
-    (histData || []).forEach((r: any) => {
-      const a = acum.get(r.vehiculo_id) || { suma: 0, n: 0 };
-      a.suma += Number(r.litros_por_100km);
-      a.n += 1;
-      acum.set(r.vehiculo_id, a);
-    });
-
-    const yaAlertado = new Set<string>();
-    for (const r of cargasHoy) {
-      if (yaAlertado.has(r.vehiculo_id)) continue;
-      const asignado = asignadoPorVeh.get(r.vehiculo_id);
-      const hist = acum.get(r.vehiculo_id);
-      const referencia =
-        asignado != null && asignado > 0
-          ? asignado
-          : hist && hist.n > 0
-          ? hist.suma / hist.n
+      .in("id", Array.from(porVeh.keys()));
+    for (const v of (vehData || []) as any[]) {
+      const a = porVeh.get(v.id)!;
+      const ref = referenciaL100(v);
+      const l100 = (a.litros / a.km) * 100;
+      const tanque =
+        v.capacidad_tanque_litros != null
+          ? Number(v.capacidad_tanque_litros)
           : null;
-      if (referencia == null || referencia <= 0) continue;
-      if (Number(r.litros_por_100km) > referencia * (1 + UMBRAL_PEOR)) {
+      if (semaforo(l100, ref, a.litros, tanque) === "alto" && ref != null)
         alertas.push({
-          vehiculo: r.vehiculo_nombre,
-          l100: Number(r.litros_por_100km),
-          referencia,
+          vehiculo: v.nombre ?? a.nombre,
+          l100,
+          referencia: ref,
+          km: a.km,
         });
-        yaAlertado.add(r.vehiculo_id);
-      }
     }
+    alertas.sort((x, y) => y.l100 / y.referencia - x.l100 / x.referencia);
   }
 
   const litrosMes = cargas.reduce((s, r) => s + Number(r.litros), 0);
   const costoMes = cargas.reduce((s, r) => s + Number(r.costo_total || 0), 0);
-  const conL100 = cargas.filter((r) => r.litros_por_100km != null);
+  // Consumo del mes: litros de los tramos ÷ km recorridos (igual que Reportes)
+  const conTramo = cargas.filter(
+    (r) => r.distancia_km != null && Number(r.distancia_km) > 0,
+  );
+  const kmMes = conTramo.reduce((s, r) => s + Number(r.distancia_km), 0);
   const promL100 =
-    conL100.length > 0
-      ? conL100.reduce((s, r) => s + Number(r.litros_por_100km), 0) /
-        conL100.length
+    kmMes > 0
+      ? (conTramo.reduce((s, r) => s + Number(r.litros), 0) / kmMes) * 100
       : null;
 
   const recientes = cargas.slice(0, 5);
@@ -136,14 +140,23 @@ export default async function DashboardPage() {
             </span>
             <div className="space-y-1">
               <p className="text-sm font-semibold text-amber-800">
-                Consumo alto hoy
+                Consumo alto en los últimos 30 días
               </p>
               {alertas.map((a, i) => (
                 <p key={i} className="text-xs text-amber-700">
-                  {a.vehiculo}: {fmtNumber(a.l100, 1)} L/100 km (referencia{" "}
-                  {fmtNumber(a.referencia, 1)} L/100 km). Revisá la carga.
+                  <span className="font-semibold">{a.vehiculo}</span>:{" "}
+                  {fmtNumber(a.l100, 1)} L/100 km, referencia{" "}
+                  {fmtNumber(a.referencia, 1)} (+
+                  {fmtNumber((a.l100 / a.referencia - 1) * 100, 0)}%) en{" "}
+                  {fmtNumber(a.km, 0)} km.
                 </p>
               ))}
+              <Link
+                href="/reportes"
+                className="inline-block pt-1 text-xs font-semibold text-amber-800 underline"
+              >
+                Ver detalle en Reportes
+              </Link>
             </div>
           </div>
         </div>
@@ -162,10 +175,8 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-3">
         <Kpi
           label="Consumo prom."
-          value={
-            promL100 != null ? `${fmtNumber(promL100, 1)} L/100 km` : "—"
-          }
-          hint="Promedio de cargas"
+          value={promL100 != null ? `${fmtNumber(promL100, 1)} L/100 km` : "—"}
+          hint="Litros ÷ km del mes"
         />
         <Kpi label="Cargas" value={fmtNumber(cargas.length)} hint="En el mes" />
         <Kpi
