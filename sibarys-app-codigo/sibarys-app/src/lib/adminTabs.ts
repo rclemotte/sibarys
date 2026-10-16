@@ -3,6 +3,11 @@ import type { Permiso } from "@/lib/permisos";
 /** Secciones de administración y el permiso que necesita cada una. */
 export const ADMIN_TABS: { href: string; label: string; permiso?: Permiso }[] = [
   { href: "/admin/vehiculos", label: "Vehículos", permiso: "puede_editar_vehiculos" },
+  {
+    href: "/admin/mantenimiento",
+    label: "Mantenimiento",
+    permiso: "puede_editar_vehiculos",
+  },
   { href: "/admin/combustibles", label: "Combustibles", permiso: "puede_editar_catalogos" },
   { href: "/admin/marcas", label: "Marcas", permiso: "puede_editar_catalogos" },
   { href: "/admin/empresas", label: "Empresas", permiso: "puede_editar_catalogos" },

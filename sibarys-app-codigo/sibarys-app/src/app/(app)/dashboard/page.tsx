@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { perfilActual, tienePermiso } from "@/lib/permisos";
+import {
+  estadoDe,
+  ordenarPorUrgencia,
+  type FilaConEstado,
+  type FilaMantenimiento,
+} from "@/lib/mantenimiento";
 import { referenciaL100 } from "@/lib/consumo";
 import { createClient } from "@/lib/supabase/server";
 import type { Consumo } from "@/lib/types";
@@ -116,6 +123,29 @@ export default async function DashboardPage() {
     alertas.sort((x, y) => y.l100 / y.referencia - x.l100 / x.referencia);
   }
 
+  // ---- Aviso de mantenimiento (administración) ---------------------------
+  const yo = await perfilActual(supabase);
+  let mantAviso: FilaConEstado[] = [];
+  if (tienePermiso(yo, "puede_editar_vehiculos")) {
+    const { data: est, error: errMant } = await supabase
+      .from("estado_mantenimiento")
+      .select("*")
+      .eq("activo", true);
+    if (!errMant)
+      mantAviso = ordenarPorUrgencia(
+        ((est || []) as FilaMantenimiento[])
+          .map((f) =>
+            estadoDe({
+              ...f,
+              km_actual: f.km_actual != null ? Number(f.km_actual) : null,
+              ultimo_km: f.ultimo_km != null ? Number(f.ultimo_km) : null,
+              km_proximo: f.km_proximo != null ? Number(f.km_proximo) : null,
+            }),
+          )
+          .filter((f) => f.estado === "vencido" || f.estado === "proximo"),
+      );
+  }
+
   const litrosMes = cargas.reduce((s, r) => s + Number(r.litros), 0);
   const costoMes = cargas.reduce((s, r) => s + Number(r.costo_total || 0), 0);
   // Consumo del mes: litros de los tramos ÷ km recorridos (igual que Reportes)
@@ -156,6 +186,40 @@ export default async function DashboardPage() {
                 className="inline-block pt-1 text-xs font-semibold text-amber-800 underline"
               >
                 Ver detalle en Reportes
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {mantAviso.length > 0 ? (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg" aria-hidden="true">
+              🔧
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-sky-900">
+                Mantenimiento próximo o vencido
+              </p>
+              {mantAviso.slice(0, 5).map((f) => (
+                <p key={f.vehiculo_id} className="text-xs text-sky-800">
+                  <span className="font-semibold">{f.nombre}</span>:{" "}
+                  {f.faltan != null && f.faltan <= 0
+                    ? `vencido, se pasó ${fmtNumber(-f.faltan, 0)} km`
+                    : `faltan ${fmtNumber(f.faltan ?? 0, 0)} km`}
+                </p>
+              ))}
+              {mantAviso.length > 5 ? (
+                <p className="text-xs text-sky-800">
+                  y {mantAviso.length - 5} más.
+                </p>
+              ) : null}
+              <Link
+                href="/admin/mantenimiento"
+                className="inline-block pt-1 text-xs font-semibold text-sky-900 underline"
+              >
+                Ver mantenimiento
               </Link>
             </div>
           </div>
