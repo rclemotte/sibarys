@@ -1,5 +1,6 @@
 "use server";
 
+import { errorLitrosTanque } from "@/lib/consumo";
 import { textoEstacion } from "@/lib/estaciones";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -45,6 +46,17 @@ export async function crearCarga(
   // Precio por litro = total pagado ÷ litros cargados
   const precio_litro = Math.round((total / litros) * 100) / 100;
   const costo_total = total;
+
+  // Los litros no pueden superar la capacidad del tanque (+10%)
+  const { data: veh } = await supabase
+    .from("vehiculos")
+    .select("nombre, capacidad_tanque_litros")
+    .eq("id", vehiculo_id)
+    .maybeSingle();
+  if (veh) {
+    const errTanque = errorLitrosTanque(litros, veh);
+    if (errTanque) return { error: errTanque };
+  }
 
   // El odómetro no puede ser menor al de la última carga del vehículo.
   // Como ahora varios choferes usan el mismo vehículo, se consulta con

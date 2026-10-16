@@ -1,121 +1,117 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Consumo } from "@/lib/types";
-import { fmtNumber, ZONA_HORARIA } from "@/lib/format";
-import { TrendChart, VehicleLitersChart } from "./Charts";
+import { hoyLocal } from "@/lib/format";
+import { referenciaL100 } from "@/lib/consumo";
+import { sumarDias, type FilaReporte } from "@/lib/reportes";
+import ReportesPanel from "./ReportesPanel";
 
 export const dynamic = "force-dynamic";
+
+/** Trae todas las filas de una consulta, de a 1000 (límite de Supabase). */
+async function traerTodo<T>(
+  consulta: (desde: number, hasta: number) => PromiseLike<{ data: T[] | null }>,
+): Promise<T[]> {
+  const todo: T[] = [];
+  for (let i = 0; ; i += 1000) {
+    const { data } = await consulta(i, i + 999);
+    const lote = data || [];
+    todo.push(...lote);
+    if (lote.length < 1000) break;
+  }
+  return todo;
+}
 
 export default async function ReportesPage() {
   const supabase = createClient();
 
-  const desde = new Date();
-  desde.setMonth(desde.getMonth() - 6);
+  // 13 meses: alcanza para "este año" y para comparar con el periodo anterior
+  const desde = sumarDias(hoyLocal(), -400);
 
-  const { data } = await supabase
-    .from("consumo")
-    .select("*")
-    .gte("registrado_en", desde.toISOString())
-    .order("registrado_en", { ascending: true });
+  const [
+    consumo,
+    cargas,
+    { data: vehiculos },
+    { data: empresas },
+    { data: estaciones },
+  ] = await Promise.all([
+    traerTodo<any>((a, b) =>
+      supabase
+        .from("consumo")
+        .select(
+          "id, registrado_en, vehiculo_id, chofer_id, chofer_nombre, combustible_nombre, litros, costo_total, odometro_km, distancia_km, tanque_lleno",
+        )
+        .gte("registrado_en", `${desde}T00:00:00-03:00`)
+        .order("registrado_en", { ascending: true })
+        .range(a, b),
+    ),
+    traerTodo<any>((a, b) =>
+      supabase
+        .from("cargas")
+        .select("id, estacion_id")
+        .gte("registrado_en", `${desde}T00:00:00-03:00`)
+        .order("registrado_en", { ascending: true })
+        .range(a, b),
+    ),
+    supabase.from("vehiculos").select("*"),
+    supabase.from("empresas").select("id, nombre"),
+    supabase.from("estaciones_servicio").select("id, nombre, emblemas(nombre)"),
+  ]);
 
-  const cargas = (data || []) as Consumo[];
-
-  // Tendencia de consumo (L/100 km) en el tiempo
-  const trend = cargas
-    .filter((r) => r.litros_por_100km != null)
-    .map((r) => ({
-      label: new Date(r.registrado_en).toLocaleDateString("es-AR", {
-        timeZone: ZONA_HORARIA,
-        day: "2-digit",
-        month: "2-digit",
-      }),
-      l100: Number(r.litros_por_100km),
-    }));
-
-  // Agregado por vehículo
-  const porVehiculo = new Map<
-    string,
-    { name: string; liters: number; l100Sum: number; l100Count: number }
-  >();
-  for (const r of cargas) {
-    const key = r.vehiculo_id;
-    const cur =
-      porVehiculo.get(key) || {
-        name: r.vehiculo_nombre,
-        liters: 0,
-        l100Sum: 0,
-        l100Count: 0,
-      };
-    cur.liters += Number(r.litros);
-    if (r.litros_por_100km != null) {
-      cur.l100Sum += Number(r.litros_por_100km);
-      cur.l100Count += 1;
-    }
-    porVehiculo.set(key, cur);
-  }
-
-  const vehicleBars = Array.from(porVehiculo.values())
-    .map((v) => ({
-      name: v.name,
-      liters: Math.round(v.liters),
-      avgL100: v.l100Count > 0 ? v.l100Sum / v.l100Count : null,
-    }))
-    .sort((a, b) => b.liters - a.liters);
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Reportes</h1>
-        <p className="text-sm text-slate-500">Últimos 6 meses.</p>
-      </div>
-
-      <div className="card">
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
-          Consumo en el tiempo (L/100 km)
-        </h2>
-        <TrendChart data={trend} />
-      </div>
-
-      <div className="card">
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
-          Litros por vehículo
-        </h2>
-        <VehicleLitersChart data={vehicleBars} />
-      </div>
-
-      <div className="card">
-        <h2 className="mb-3 text-sm font-semibold text-slate-600">
-          Detalle por vehículo
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase text-slate-400">
-                <th className="pb-2">Vehículo</th>
-                <th className="pb-2 text-right">Litros</th>
-                <th className="pb-2 text-right">Prom. L/100 km</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vehicleBars.map((v) => (
-                <tr key={v.name} className="border-t border-slate-100">
-                  <td className="py-2">{v.name}</td>
-                  <td className="py-2 text-right">{fmtNumber(v.liters)}</td>
-                  <td className="py-2 text-right">
-                    {v.avgL100 != null ? fmtNumber(v.avgL100, 1) : "—"}
-                  </td>
-                </tr>
-              ))}
-              {vehicleBars.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="py-4 text-center text-slate-400">
-                    Sin datos.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  const vehPorId = new Map(
+    (vehiculos || []).map((v: any) => [v.id as string, v]),
   );
+  const empresaPorId = new Map(
+    (empresas || []).map((e: any) => [e.id as string, e.nombre as string]),
+  );
+  const estPorId = new Map(
+    (estaciones || []).map((e: any) => [e.id as string, e]),
+  );
+  const estacionDeCarga = new Map(
+    cargas.map((c: any) => [c.id as string, c.estacion_id as string | null]),
+  );
+
+  // Modelos escritos distinto ("MASTER III" / "Master III") se agrupan juntos
+  const modeloCanonico = new Map<string, string>();
+  const normalizarModelo = (m: string) => {
+    const k = m.toUpperCase();
+    if (!modeloCanonico.has(k)) modeloCanonico.set(k, m);
+    return modeloCanonico.get(k)!;
+  };
+
+  const filas: FilaReporte[] = consumo.map((c: any) => {
+    const v: any = vehPorId.get(c.vehiculo_id) || {};
+    const est: any = estPorId.get(estacionDeCarga.get(c.id) ?? "") || null;
+    const modelo = [v.marca, v.modelo]
+      .filter(Boolean)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+    return {
+      id: c.id,
+      fecha: hoyLocal(new Date(c.registrado_en)),
+      registrado_en: c.registrado_en,
+      vehiculo_id: c.vehiculo_id,
+      vehiculo: v.nombre ?? "—",
+      patente: v.patente ?? "",
+      modelo: modelo ? normalizarModelo(modelo) : "Sin modelo",
+      tanque:
+        v.capacidad_tanque_litros != null
+          ? Number(v.capacidad_tanque_litros)
+          : null,
+      ref_l100: referenciaL100(v),
+      alquilado: !!v.es_alquilado,
+      empresa: v.empresa_id ? (empresaPorId.get(v.empresa_id) ?? null) : null,
+      chofer_id: c.chofer_id,
+      chofer: c.chofer_nombre ?? "—",
+      combustible: c.combustible_nombre ?? "Sin combustible",
+      estacion: est?.nombre ?? "Sin estación",
+      emblema: est?.emblemas?.nombre ?? "Sin estación",
+      litros: Number(c.litros) || 0,
+      gasto: Number(c.costo_total) || 0,
+      km: Number(c.odometro_km) || 0,
+      recorrido: c.distancia_km != null ? Number(c.distancia_km) : null,
+      tanque_lleno: !!c.tanque_lleno,
+    };
+  });
+
+  return <ReportesPanel filas={filas} hoy={hoyLocal()} />;
 }
