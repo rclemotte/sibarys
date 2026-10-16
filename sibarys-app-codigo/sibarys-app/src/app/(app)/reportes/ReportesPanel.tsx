@@ -23,7 +23,8 @@ import {
   type Orden,
   type Semaforo,
 } from "@/lib/reportes";
-import { TiempoChart } from "./Charts";
+import { ConsumoChart, TiempoChart, puntosConsumo } from "./Charts";
+import VehiculosLineas from "./VehiculosLineas";
 
 // ------------------------------------------------------------ helpers de UI
 
@@ -637,41 +638,81 @@ export default function ReportesPanel({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        {/* Evolución */}
-        <div className="card lg:sticky lg:top-20">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-600">
-              {metrica === "gasto" ? "Gasto" : "Litros"} por{" "}
-              {ag === "dia" ? "día" : ag}
-            </h2>
-            <div className="flex gap-1">
-              <select
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
-                value={metrica}
-                onChange={(e) =>
-                  setMetrica(e.target.value as "gasto" | "litros")
-                }
-                aria-label="Métrica"
-              >
-                <option value="gasto">Gasto</option>
-                <option value="litros">Litros</option>
-              </select>
-              <select
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
-                value={agrupacion}
-                onChange={(e) =>
-                  setAgrupacion(e.target.value as Agrupacion | "auto")
-                }
-                aria-label="Agrupar por"
-              >
-                <option value="auto">Automático</option>
-                <option value="dia">Por día</option>
-                <option value="semana">Por semana</option>
-                <option value="mes">Por mes</option>
-              </select>
+        <div className="space-y-4">
+          {/* Evolución */}
+          <div className="card">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-slate-600">
+                {metrica === "gasto" ? "Gasto" : "Litros"} por{" "}
+                {ag === "dia" ? "día" : ag}
+              </h2>
+              <div className="flex gap-1">
+                <select
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                  value={metrica}
+                  onChange={(e) =>
+                    setMetrica(e.target.value as "gasto" | "litros")
+                  }
+                  aria-label="Métrica"
+                >
+                  <option value="gasto">Gasto</option>
+                  <option value="litros">Litros</option>
+                </select>
+                <select
+                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                  value={agrupacion}
+                  onChange={(e) =>
+                    setAgrupacion(e.target.value as Agrupacion | "auto")
+                  }
+                  aria-label="Agrupar por"
+                >
+                  <option value="auto">Automático</option>
+                  <option value="dia">Por día</option>
+                  <option value="semana">Por semana</option>
+                  <option value="mes">Por mes</option>
+                </select>
+              </div>
             </div>
+            <TiempoChart data={serie} metrica={metrica} />
           </div>
-          <TiempoChart data={serie} metrica={metrica} />
+
+          {/* Consumo por vehículo: una fila por vehículo, o el detalle de uno */}
+          <div className="card">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-semibold text-slate-600">
+                  Consumo por vehículo (L/100 km)
+                </h2>
+                <p className="mb-2 text-xs text-slate-400">
+                  {f.vehiculo
+                    ? "Cada punto es una carga de este vehículo."
+                    : "Del más alto al más bajo respecto de su referencia."}
+                </p>
+              </div>
+              {f.vehiculo ? (
+                <button
+                  type="button"
+                  className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"
+                  onClick={() => set("vehiculo", "")}
+                >
+                  Ver todos
+                </button>
+              ) : null}
+            </div>
+            {f.vehiculo ? (
+              <ConsumoChart puntos={puntosConsumo(sel)} unVehiculo />
+            ) : (
+              <VehiculosLineas
+                puntos={puntosConsumo(sel)}
+                vehiculos={rankingVehiculos(sel)}
+                desdeMs={new Date(`${f.desde}T00:00:00-03:00`).getTime()}
+                hastaMs={new Date(
+                  `${sumarDias(f.hasta, 1)}T00:00:00-03:00`,
+                ).getTime()}
+                onElegir={(id) => set("vehiculo", id)}
+              />
+            )}
+          </div>
         </div>
 
         {/* Rankings */}
