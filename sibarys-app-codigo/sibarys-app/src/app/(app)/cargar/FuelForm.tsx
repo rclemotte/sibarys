@@ -224,7 +224,7 @@ export default function FuelForm({
               type="text"
               inputMode="numeric"
               className="field"
-              placeholder="Ej. 46.000"
+              placeholder="Ej. 450.000"
               value={fmtMiles(total)}
               onChange={(e) => setTotal(e.target.value.replace(/\D/g, ""))}
               required
