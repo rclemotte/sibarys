@@ -69,13 +69,10 @@ export function fmtNumber(n: number | null | undefined, digits = 0): string {
   });
 }
 
+/** Monto en guaraníes, sin decimales: 41582627 -> "₲ 41.582.627". */
 export function fmtMoney(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
-  return n.toLocaleString("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  });
+  return `₲ ${Math.round(n).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
 }
 
 export function fmtDate(d: string | null | undefined): string {

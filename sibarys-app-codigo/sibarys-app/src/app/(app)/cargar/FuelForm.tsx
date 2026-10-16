@@ -216,7 +216,7 @@ export default function FuelForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label" htmlFor="total_view">
-              Total cargado ($)
+              Total cargado en Guaraníes (₲)
             </label>
             <input type="hidden" name="total" value={total} />
             <input

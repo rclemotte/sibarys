@@ -41,7 +41,7 @@ export async function crearCarga(
     return { error: "Ingresá un kilometraje válido." };
   if (!litros || litros <= 0) return { error: "Ingresá los litros cargados." };
   if (!total || total <= 0)
-    return { error: "Ingresá el total cargado ($)." };
+    return { error: "Ingresá el total cargado (₲)." };
 
   // Precio por litro = total pagado ÷ litros cargados
   const precio_litro = Math.round((total / litros) * 100) / 100;

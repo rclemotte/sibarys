@@ -36,7 +36,7 @@ export function TiempoChart({
     );
   const fmt = (v: number) =>
     metrica === "gasto"
-      ? `$ ${v.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
+      ? `₲ ${v.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
       : `${v.toLocaleString("es-AR", { maximumFractionDigits: 1 })} L`;
   return (
     <ResponsiveContainer width="100%" height={220}>
