@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { hoyLocal } from "@/lib/format";
 import { referenciaL100 } from "@/lib/consumo";
 import { sumarDias, type FilaReporte } from "@/lib/reportes";
+import { esAdminRol, perfilActual } from "@/lib/permisos";
 import ReportesPanel from "./ReportesPanel";
 
 export const dynamic = "force-dynamic";
@@ -20,8 +21,45 @@ async function traerTodo<T>(
   return todo;
 }
 
+/**
+ * Cargas con su recorrido y consumo. Usa reporte_consumo(), que calcula el
+ * recorrido con el historial completo de cada vehículo y devuelve solo lo
+ * que el usuario puede ver (administración: todo; chofer: lo que cargó él).
+ * Si la función todavía no existe en la base, usa la vista consumo.
+ */
+async function traerConsumo(
+  supabase: ReturnType<typeof createClient>,
+  desdeIso: string,
+): Promise<any[]> {
+  const columnas =
+    "id, registrado_en, vehiculo_id, chofer_id, chofer_nombre, combustible_nombre, litros, costo_total, odometro_km, distancia_km, tanque_lleno";
+  const prueba = await supabase
+    .rpc("reporte_consumo", { p_desde: desdeIso })
+    .select(columnas)
+    .range(0, 0);
+  if (!prueba.error) {
+    return traerTodo<any>(
+      (a, b) =>
+        supabase
+          .rpc("reporte_consumo", { p_desde: desdeIso })
+          .select(columnas)
+          .range(a, b) as unknown as PromiseLike<{ data: any[] | null }>,
+    );
+  }
+  return traerTodo<any>((a, b) =>
+    supabase
+      .from("consumo")
+      .select(columnas)
+      .gte("registrado_en", desdeIso)
+      .order("registrado_en", { ascending: true })
+      .range(a, b),
+  );
+}
+
 export default async function ReportesPage() {
   const supabase = createClient();
+  const yo = await perfilActual(supabase);
+  const esAdmin = esAdminRol(yo?.rol);
 
   // 13 meses: alcanza para "este año" y para comparar con el periodo anterior
   const desde = sumarDias(hoyLocal(), -400);
@@ -33,16 +71,7 @@ export default async function ReportesPage() {
     { data: empresas },
     { data: estaciones },
   ] = await Promise.all([
-    traerTodo<any>((a, b) =>
-      supabase
-        .from("consumo")
-        .select(
-          "id, registrado_en, vehiculo_id, chofer_id, chofer_nombre, combustible_nombre, litros, costo_total, odometro_km, distancia_km, tanque_lleno",
-        )
-        .gte("registrado_en", `${desde}T00:00:00-03:00`)
-        .order("registrado_en", { ascending: true })
-        .range(a, b),
-    ),
+    traerConsumo(supabase, `${desde}T00:00:00-03:00`),
     traerTodo<any>((a, b) =>
       supabase
         .from("cargas")
@@ -113,5 +142,11 @@ export default async function ReportesPage() {
     };
   });
 
-  return <ReportesPanel filas={filas} hoy={hoyLocal()} />;
+  // Un chofer solo ve las cargas que registró él (la base ya lo filtra;
+  // esto es una segunda barrera)
+  const visibles = esAdmin
+    ? filas
+    : filas.filter((r) => r.chofer_id === yo?.id);
+
+  return <ReportesPanel filas={visibles} hoy={hoyLocal()} esAdmin={esAdmin} />;
 }

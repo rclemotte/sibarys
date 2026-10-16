@@ -202,10 +202,16 @@ function construirRanking(vista: Vista, filas: FilaReporte[]): FilaRanking[] {
 export default function ReportesPanel({
   filas,
   hoy,
+  esAdmin = true,
 }: {
   filas: FilaReporte[];
   hoy: string;
+  esAdmin?: boolean;
 }) {
+  // El chofer ve solo sus cargas: no tiene sentido filtrar ni rankear choferes
+  const vistas = esAdmin
+    ? VISTAS
+    : VISTAS.filter((v) => v.clave !== "choferes");
   const inicial = PERIODOS.find((p) => p.clave === "mes")!.rango();
   const [periodo, setPeriodo] = useState("mes");
   const [f, setF] = useState<Filtros>({ ...FILTROS_VACIOS, ...inicial });
@@ -361,7 +367,9 @@ export default function ReportesPanel({
     <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-3rem))] lg:-translate-x-1/2">
       <div className="flex items-end justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold">Reportes</h1>
+          <h1 className="text-xl font-bold">
+            {esAdmin ? "Reportes" : "Mis cargas"}
+          </h1>
           <p className="text-sm text-slate-500">
             {f.desde.split("-").reverse().join("/")} al{" "}
             {f.hasta.split("-").reverse().join("/")}
@@ -482,21 +490,23 @@ export default function ReportesPanel({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="label">Chofer</label>
-              <select
-                className={selectCls}
-                value={f.chofer}
-                onChange={(e) => set("chofer", e.target.value)}
-              >
-                <option value="">Todos</option>
-                {ops.choferes.map(([id, n]) => (
-                  <option key={id} value={id}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {esAdmin ? (
+              <div>
+                <label className="label">Chofer</label>
+                <select
+                  className={selectCls}
+                  value={f.chofer}
+                  onChange={(e) => set("chofer", e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {ops.choferes.map(([id, n]) => (
+                    <option key={id} value={id}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
             <div>
               <label className="label">Combustible</label>
               <select
@@ -667,7 +677,7 @@ export default function ReportesPanel({
         {/* Rankings */}
         <div className="card space-y-3">
           <div className="-mx-1 flex gap-1 overflow-x-auto pb-1">
-            {VISTAS.map((v) => (
+            {vistas.map((v) => (
               <button
                 key={v.clave}
                 type="button"
