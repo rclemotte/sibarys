@@ -1,5 +1,6 @@
 "use client";
 
+import ReportesNav from "@/components/ReportesNav";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { fmtNumber, fmtMoney } from "@/lib/format";
@@ -366,6 +367,7 @@ export default function ReportesPanel({
 
   return (
     <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-3rem))] lg:-translate-x-1/2">
+      {esAdmin ? <ReportesNav /> : null}
       <div className="flex items-end justify-between gap-2">
         <div>
           <h1 className="text-xl font-bold">

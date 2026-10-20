@@ -13,5 +13,5 @@ export default async function AdminIndex() {
   const primera = ADMIN_TABS.find(
     (t) => !t.permiso || tienePermiso(yo, t.permiso)
   );
-  redirect(primera?.href ?? "/admin/exportar");
+  redirect(primera?.href ?? "/reportes");
 }
