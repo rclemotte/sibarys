@@ -25,9 +25,12 @@ function Submit() {
 export default function FuelForm({
   vehiculos,
   estaciones,
+  choferes,
 }: {
   vehiculos: VehiculoParaCarga[];
   estaciones: EstacionParaCarga[];
+  /** Solo para administración: permite registrar cargas olvidadas. */
+  choferes?: { id: string; nombre: string }[];
 }) {
   const [state, formAction] = useFormState<CargarState, FormData>(crearCarga, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -44,6 +47,9 @@ export default function FuelForm({
   const [litros, setLitros] = useState("");
   const [total, setTotal] = useState(""); // solo dígitos
   const [estacionId, setEstacionId] = useState("");
+  const [olvidada, setOlvidada] = useState(false);
+  const [choferId, setChoferId] = useState("");
+  const [fecha, setFecha] = useState("");
 
   const vehiculo = useMemo(
     () => vehiculos.find((v) => v.id === vehiculoId),
@@ -89,6 +95,8 @@ export default function FuelForm({
       setLitros("");
       setTotal("");
       setEstacionId("");
+      setChoferId("");
+      setFecha("");
       if (typeof window !== "undefined")
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -122,6 +130,74 @@ export default function FuelForm({
           {state.error}
         </div>
       ) : null}
+      {choferes ? (
+        <div
+          className={`card space-y-3 ${
+            olvidada ? "border-amber-300 bg-amber-50/60" : ""
+          }`}
+        >
+          <label className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              className="h-5 w-5 accent-brand"
+              checked={olvidada}
+              onChange={(e) => setOlvidada(e.target.checked)}
+            />
+            <span className="text-sm font-medium text-slate-700">
+              Registrar una carga que un chofer se olvidó de cargar
+            </span>
+          </label>
+          {olvidada ? (
+            <>
+              <input type="hidden" name="modo" value="olvidada" />
+              <input type="hidden" name="chofer_id" value={choferId} />
+              <div>
+                <label className="label">Chofer que hizo la carga</label>
+                <Combobox
+                  options={choferes}
+                  value={choferId}
+                  onChange={setChoferId}
+                  placeholder="Buscar chofer…"
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="registrado_en">
+                  Fecha y hora real de la carga
+                </label>
+                <input
+                  id="registrado_en"
+                  name="registrado_en"
+                  type="datetime-local"
+                  className="field"
+                  value={fecha}
+                  max={hoy}
+                  onChange={(e) => setFecha(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="label" htmlFor="motivo">
+                  Motivo
+                </label>
+                <input
+                  id="motivo"
+                  name="motivo"
+                  type="text"
+                  className="field"
+                  placeholder="Ej. el chofer se olvidó de registrarla"
+                  minLength={3}
+                  required
+                />
+              </div>
+              <p className="text-[11px] text-amber-700">
+                La carga queda a nombre del chofer y con la fecha que pongas.
+                En el Historial se ve que la registró administración.
+              </p>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="card space-y-4">
         <div>
           <label className="label" htmlFor="vehiculo_id">
@@ -267,12 +343,13 @@ export default function FuelForm({
           />
         </div>
 
+        {olvidada ? null : (
         <div>
-          <label className="label" htmlFor="registrado_en">
+          <label className="label" htmlFor="registrado_ahora">
             Fecha y hora
           </label>
           <input
-            id="registrado_en"
+            id="registrado_ahora"
             type="datetime-local"
             className="field cursor-not-allowed bg-slate-100 text-slate-500"
             value={hoy}
@@ -283,6 +360,7 @@ export default function FuelForm({
             Se registra automáticamente con la fecha y hora del momento.
           </p>
         </div>
+        )}
 
         <label className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
           <input

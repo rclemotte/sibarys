@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Combobox from "@/components/Combobox";
+import { fechaHoraLocalInput } from "@/lib/format";
 import { editarCarga, type EditarState } from "./actions";
 
 type Opt = { id: string; nombre: string };
@@ -10,6 +11,8 @@ type Opt = { id: string; nombre: string };
 export type CargaEditable = {
   id: string;
   vehiculo_id: string;
+  chofer_id: string | null;
+  registrado_en: string;
   tipo_combustible_id: string | null;
   estacion_id: string | null;
   odometro_km: number;
@@ -34,14 +37,17 @@ export default function EditarCargaForm({
   vehiculos,
   combustibles,
   estaciones,
+  choferes,
 }: {
   carga: CargaEditable;
   vehiculos: Opt[];
   combustibles: Opt[];
   estaciones: Opt[];
+  choferes: Opt[];
 }) {
   const [open, setOpen] = useState(false);
   const [estacionId, setEstacionId] = useState(carga.estacion_id ?? "");
+  const [choferId, setChoferId] = useState(carga.chofer_id ?? "");
   const [litros, setLitros] = useState(String(carga.litros ?? ""));
   const [total, setTotal] = useState(
     carga.costo_total != null ? String(carga.costo_total) : "",
@@ -73,6 +79,30 @@ export default function EditarCargaForm({
     >
       <input type="hidden" name="id" value={carga.id} />
       <input type="hidden" name="estacion_id" value={estacionId} />
+      <input type="hidden" name="chofer_id" value={choferId} />
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="label">Fecha y hora</label>
+          <input
+            name="registrado_en"
+            type="datetime-local"
+            className="field"
+            defaultValue={fechaHoraLocalInput(new Date(carga.registrado_en))}
+            max={fechaHoraLocalInput()}
+            required
+          />
+        </div>
+        <div>
+          <label className="label">Chofer</label>
+          <Combobox
+            options={choferes}
+            value={choferId}
+            onChange={setChoferId}
+            placeholder="Buscar chofer…"
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>

@@ -56,6 +56,18 @@ export function inicioDelDiaLocal(ymd: string = hoyLocal()): Date {
   return new Date(utcMedianoche.getTime() - offsetMinutos(utcMedianoche) * 60000);
 }
 
+/**
+ * Instante real (Date) de un valor de <input type="datetime-local">
+ * ("YYYY-MM-DDTHH:mm") interpretado en hora de Paraguay. Sirve en el
+ * servidor, que corre en UTC. Devuelve null si el texto no es válido.
+ */
+export function instanteLocal(valor: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
+  const comoUtc = new Date(`${valor}:00Z`);
+  if (Number.isNaN(comoUtc.getTime())) return null;
+  return new Date(comoUtc.getTime() - offsetMinutos(comoUtc) * 60000);
+}
+
 /** 00:00 en Paraguay del primer día del mes actual. */
 export function inicioDelMesLocal(): Date {
   return inicioDelDiaLocal(hoyLocal().slice(0, 8) + "01");

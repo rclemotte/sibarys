@@ -5,7 +5,7 @@ import { tienePermiso } from "@/lib/permisos";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { textoEstacion } from "@/lib/estaciones";
-import { fmtNumber } from "@/lib/format";
+import { fechaHoraLocalInput, fmtDateTime, fmtNumber, instanteLocal } from "@/lib/format";
 
 export type EditarState = { error?: string; success?: string };
 
@@ -50,6 +50,9 @@ export async function editarCarga(
   const tanque_lleno = formData.get("tanque_lleno") === "on";
   const notas = String(formData.get("notas") || "").trim() || null;
   const motivo = String(formData.get("motivo") || "").trim();
+  const chofer_id = String(formData.get("chofer_id") || "") || null;
+  const fechaRaw = String(formData.get("registrado_en") || "");
+  const fecha = instanteLocal(fechaRaw);
 
   if (!id) return { error: "Carga inválida." };
   if (!vehiculo_id) return { error: "Elegí el vehículo." };
@@ -60,6 +63,10 @@ export async function editarCarga(
     return { error: "Ingresá los litros." };
   if (!Number.isFinite(total) || total <= 0)
     return { error: "Ingresá el total cargado." };
+  if (!fecha) return { error: "Ingresá la fecha y hora de la carga." };
+  if (fecha.getTime() > Date.now() + 5 * 60000)
+    return { error: "La fecha de la carga no puede ser futura." };
+  if (!chofer_id) return { error: "Elegí el chofer." };
   if (motivo.length < 3)
     return { error: "Escribí el motivo de la corrección." };
 
@@ -83,7 +90,7 @@ export async function editarCarga(
   const { data: actual, error: errLeer } = await supabase
     .from("cargas")
     .select(
-      "vehiculo_id, tipo_combustible_id, estacion_id, estacion, odometro_km, litros, costo_total, tanque_lleno, notas",
+      "vehiculo_id, chofer_id, registrado_en, tipo_combustible_id, estacion_id, estacion, odometro_km, litros, costo_total, tanque_lleno, notas",
     )
     .eq("id", id)
     .maybeSingle();
@@ -91,7 +98,7 @@ export async function editarCarga(
 
   // Nombres para que el historial sea legible
   const ids = (a: (string | null)[]) => a.filter(Boolean) as string[];
-  const [{ data: vs }, { data: ts }] = await Promise.all([
+  const [{ data: vs }, { data: ts }, { data: chs }] = await Promise.all([
     supabase
       .from("vehiculos")
       .select("id, nombre, patente")
@@ -100,7 +107,13 @@ export async function editarCarga(
       .from("tipos_combustible")
       .select("id, nombre")
       .in("id", ids([actual.tipo_combustible_id, tipo_combustible_id])),
+    supabase
+      .from("perfiles")
+      .select("id, nombre_completo")
+      .in("id", ids([actual.chofer_id, chofer_id])),
   ]);
+  const nomChofer = (cid: string | null) =>
+    (chs || []).find((x: any) => x.id === cid)?.nombre_completo ?? "—";
   const nomVeh = (vid: string | null) => {
     const v = (vs || []).find((x: any) => x.id === vid);
     return v ? `${v.nombre} (${v.patente})` : "—";
@@ -114,6 +127,15 @@ export async function editarCarga(
   const comparar = (campo: string, antes: string, despues: string) => {
     if (antes !== despues) cambios.push({ campo, antes, despues });
   };
+  const cambioFecha =
+    fechaHoraLocalInput(new Date(actual.registrado_en)) !== fechaRaw;
+  if (cambioFecha)
+    cambios.push({
+      campo: "Fecha",
+      antes: fmtDateTime(actual.registrado_en),
+      despues: fmtDateTime(fecha.toISOString()),
+    });
+  comparar("Chofer", nomChofer(actual.chofer_id), nomChofer(chofer_id));
   comparar("Vehículo", nomVeh(actual.vehiculo_id), nomVeh(vehiculo_id));
   comparar(
     "Combustible",
@@ -176,6 +198,9 @@ export async function editarCarga(
     .from("cargas")
     .update({
       vehiculo_id,
+      chofer_id,
+      // Solo si cambió (así no se pierden los segundos de la hora original)
+      ...(cambioFecha ? { registrado_en: fecha.toISOString() } : {}),
       tipo_combustible_id,
       estacion_id,
       estacion,

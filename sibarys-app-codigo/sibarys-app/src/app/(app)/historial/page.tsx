@@ -93,13 +93,19 @@ export default async function HistorialPage() {
   let optVehiculos: { id: string; nombre: string }[] = [];
   let optCombustibles: { id: string; nombre: string }[] = [];
   let optEstaciones: { id: string; nombre: string }[] = [];
+  let optChoferes: { id: string; nombre: string }[] = [];
   if (puedeCorregir && idsCargas.length > 0) {
-    const [{ data: crudas }, { data: vs }, { data: ts }, { data: es }] =
-      await Promise.all([
+    const [
+      { data: crudas },
+      { data: vs },
+      { data: ts },
+      { data: es },
+      { data: ps },
+    ] = await Promise.all([
         supabase
           .from("cargas")
           .select(
-            "id, vehiculo_id, tipo_combustible_id, estacion_id, odometro_km, litros, costo_total, tanque_lleno, notas",
+            "id, vehiculo_id, chofer_id, registrado_en, tipo_combustible_id, estacion_id, odometro_km, litros, costo_total, tanque_lleno, notas",
           )
           .in("id", idsCargas),
         supabase
@@ -112,7 +118,15 @@ export default async function HistorialPage() {
           .select("id, nombre, localidad, emblemas(nombre)")
           .eq("activo", true)
           .order("nombre"),
+        supabase
+          .from("perfiles")
+          .select("id, nombre_completo")
+          .order("nombre_completo"),
       ]);
+    optChoferes = (ps || []).map((p: any) => ({
+      id: p.id,
+      nombre: p.nombre_completo || "(sin nombre)",
+    }));
     editables = new Map(
       ((crudas || []) as any[]).map((c) => [
         c.id as string,
@@ -239,9 +253,13 @@ export default async function HistorialPage() {
                     className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"
                   >
                     <p className="font-semibold">
-                      Carga corregida: {ed.motivo}
+                      {ed.cambios.some((c) => c.campo === "Registro")
+                        ? `Registrada por administración: ${ed.motivo}`
+                        : `Carga corregida: ${ed.motivo}`}
                     </p>
-                    {ed.cambios.map((c, j) => (
+                    {ed.cambios
+                      .filter((c) => c.campo !== "Registro")
+                      .map((c, j) => (
                       <p key={j}>
                         {c.campo}: {c.valor_anterior ?? "—"} →{" "}
                         <span className="font-medium">
@@ -262,6 +280,7 @@ export default async function HistorialPage() {
                     vehiculos={optVehiculos}
                     combustibles={optCombustibles}
                     estaciones={optEstaciones}
+                    choferes={optChoferes}
                   />
                 ) : null}
               </li>

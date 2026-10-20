@@ -29,13 +29,18 @@ export default async function ExportarPage() {
     );
   }
 
-  const [{ data: ps }, { data: vs }] = await Promise.all([
+  const [{ data: ps }, { data: vs }, { data: es }] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo")
       .order("nombre_completo"),
     supabase.from("vehiculos").select("id, nombre, patente").order("nombre"),
+    supabase.from("emblemas").select("id, nombre").order("nombre"),
   ]);
+  const emblemas = (es || []).map((e: any) => ({
+    id: e.id as string,
+    nombre: e.nombre as string,
+  }));
 
   const choferes = ((ps || []) as Pick<Perfil, "id" | "nombre_completo">[]).map(
     (p) => ({ id: p.id, nombre: p.nombre_completo || "(sin nombre)" })
@@ -51,14 +56,19 @@ export default async function ExportarPage() {
 
       <div>
         <h2 className="text-base font-semibold text-slate-700">
-          Exportar cargas a Excel
+          Exportar cargas
         </h2>
         <p className="text-sm text-slate-500">
-          Descargá un archivo .xlsx con las cargas y su consumo.
+          Descargá un Excel o abrí un PDF para ver e imprimir las cargas y su
+          consumo.
         </p>
       </div>
 
-      <ExportPanel choferes={choferes} vehiculos={vehiculos} />
+      <ExportPanel
+        choferes={choferes}
+        vehiculos={vehiculos}
+        emblemas={emblemas}
+      />
 
       <div>
         <h2 className="text-base font-semibold text-slate-700">

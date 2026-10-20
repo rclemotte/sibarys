@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { esAdminRol } from "@/lib/permisos";
+import { esAdminRol, tienePermiso } from "@/lib/permisos";
 import type {
   VehiculoParaCarga,
   PrecioVigente,
@@ -17,10 +17,24 @@ export default async function CargarPage() {
 
   const { data: perfil } = await supabase
     .from("perfiles")
-    .select("rol")
+    .select("*")
     .eq("id", user!.id)
     .single();
   const esAdmin = esAdminRol(perfil?.rol);
+
+  // Administración puede registrar cargas que un chofer se olvidó de cargar
+  const puedeOlvidadas = tienePermiso(perfil, "puede_corregir_km");
+  let choferes: { id: string; nombre: string }[] = [];
+  if (puedeOlvidadas) {
+    const { data: ps } = await supabase
+      .from("perfiles")
+      .select("id, nombre_completo")
+      .order("nombre_completo");
+    choferes = (ps || []).map((p: any) => ({
+      id: p.id as string,
+      nombre: (p.nombre_completo as string) || "(sin nombre)",
+    }));
+  }
 
   // 1) Vehículos disponibles: todos los activos, para admin y choferes
   //    (cualquier chofer puede cargar en cualquier vehículo; no hay asignaciones)
@@ -118,7 +132,11 @@ export default async function CargarPage() {
             : "Todavía no hay vehículos cargados. Avisale al administrador."}
         </div>
       ) : (
-        <FuelForm vehiculos={vehiculos} estaciones={estaciones} />
+        <FuelForm
+          vehiculos={vehiculos}
+          estaciones={estaciones}
+          choferes={puedeOlvidadas ? choferes : undefined}
+        />
       )}
     </div>
   );

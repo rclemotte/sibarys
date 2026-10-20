@@ -4,6 +4,8 @@ import { errorLitrosTanque } from "@/lib/consumo";
 import { textoEstacion } from "@/lib/estaciones";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { perfilActual, tienePermiso } from "@/lib/permisos";
+import { fmtDateTime, fmtNumber, instanteLocal } from "@/lib/format";
 
 export type CargarState = { error?: string; success?: string };
 
@@ -30,10 +32,36 @@ export async function crearCarga(
   const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
   const notas = String(formData.get("notas") || "").trim() || null;
   const tanque_lleno = formData.get("tanque_lleno") === "on";
-  const fechaRaw = String(formData.get("registrado_en") || "");
-  const registrado_en = fechaRaw
-    ? new Date(fechaRaw).toISOString()
-    : new Date().toISOString();
+
+  // Carga olvidada: administración la registra después, a nombre del
+  // chofer y con la fecha real. Solo con permiso de corregir cargas.
+  const olvidada = formData.get("modo") === "olvidada";
+  let chofer_id = user.id;
+  let registrado_en = new Date().toISOString();
+  let motivo = "";
+  let choferNombre = "";
+  if (olvidada) {
+    const yo = await perfilActual(supabase);
+    if (!tienePermiso(yo, "puede_corregir_km"))
+      return { error: "No tenés permiso para registrar cargas de otros choferes." };
+    chofer_id = String(formData.get("chofer_id") || "");
+    if (!chofer_id) return { error: "Elegí el chofer que hizo la carga." };
+    const fecha = instanteLocal(String(formData.get("registrado_en") || ""));
+    if (!fecha) return { error: "Ingresá la fecha y hora real de la carga." };
+    if (fecha.getTime() > Date.now() + 5 * 60000)
+      return { error: "La fecha de la carga no puede ser futura." };
+    registrado_en = fecha.toISOString();
+    motivo = String(formData.get("motivo") || "").trim();
+    if (motivo.length < 3)
+      return { error: "Escribí el motivo (ej. el chofer se olvidó de cargarla)." };
+    const { data: ch } = await supabase
+      .from("perfiles")
+      .select("nombre_completo")
+      .eq("id", chofer_id)
+      .maybeSingle();
+    if (!ch) return { error: "No se encontró el chofer." };
+    choferNombre = ch.nombre_completo || "(sin nombre)";
+  }
 
   if (!vehiculo_id) return { error: "Elegí un vehículo." };
   if (!tipo_combustible_id) return { error: "Elegí el tipo de combustible." };
@@ -58,6 +86,49 @@ export async function crearCarga(
     if (errTanque) return { error: errTanque };
   }
 
+  if (olvidada) {
+    // Una carga con fecha pasada tiene que quedar entre la carga anterior
+    // y la siguiente de ese vehículo (por fecha).
+    const [{ data: antes }, { data: despues }, { data: igual }] =
+      await Promise.all([
+        supabase
+          .from("cargas")
+          .select("odometro_km, registrado_en")
+          .eq("vehiculo_id", vehiculo_id)
+          .lt("registrado_en", registrado_en)
+          .order("registrado_en", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("cargas")
+          .select("odometro_km, registrado_en")
+          .eq("vehiculo_id", vehiculo_id)
+          .gt("registrado_en", registrado_en)
+          .order("registrado_en", { ascending: true })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("cargas")
+          .select("registrado_en")
+          .eq("vehiculo_id", vehiculo_id)
+          .eq("odometro_km", odometro_km)
+          .limit(1)
+          .maybeSingle(),
+      ]);
+    if (igual)
+      return {
+        error: `Este vehículo ya tiene una carga con ${fmtNumber(odometro_km)} km (${fmtDateTime(igual.registrado_en)}). Revisá el Historial: puede que ya esté registrada.`,
+      };
+    if (antes && odometro_km < Number(antes.odometro_km))
+      return {
+        error: `El kilometraje (${fmtNumber(odometro_km)}) es menor al de la carga anterior a esa fecha (${fmtNumber(Number(antes.odometro_km))} km, ${fmtDateTime(antes.registrado_en)}). Revisá el km o la fecha.`,
+      };
+    if (despues && odometro_km > Number(despues.odometro_km))
+      return {
+        error: `El kilometraje (${fmtNumber(odometro_km)}) es mayor al de la carga siguiente (${fmtNumber(Number(despues.odometro_km))} km, ${fmtDateTime(despues.registrado_en)}). Revisá el km o la fecha.`,
+      };
+  }
+
   // El odómetro no puede ser menor al de la última carga del vehículo.
   // Como ahora varios choferes usan el mismo vehículo, se consulta con
   // ultimo_odometro() (ve las cargas de todos). Si esa función todavía no
@@ -80,7 +151,7 @@ export async function crearCarga(
     ultimoKm = ultima ? Number(ultima.odometro_km) : null;
   }
 
-  if (ultimoKm !== null && odometro_km < ultimoKm) {
+  if (!olvidada && ultimoKm !== null && odometro_km < ultimoKm) {
     return {
       error: `El kilometraje (${odometro_km}) es menor al de la última carga (${ultimoKm}). Revisá el número.`,
     };
@@ -103,9 +174,9 @@ export async function crearCarga(
   // Texto legacy "estacion" (lo leen historial, reportes y exportar)
   const estacion = await textoEstacion(supabase, estacion_id);
 
-  const { error } = await supabase.from("cargas").insert({
+  const { data: nueva, error } = await supabase.from("cargas").insert({
     vehiculo_id,
-    chofer_id: user.id,
+    chofer_id,
     tipo_combustible_id,
     odometro_km,
     litros,
@@ -116,7 +187,7 @@ export async function crearCarga(
     notas,
     tanque_lleno,
     registrado_en,
-  });
+  }).select("id").single();
 
   if (error) {
     if (error.message?.includes("CARGA_DUPLICADA"))
@@ -124,8 +195,25 @@ export async function crearCarga(
     return { error: "No se pudo guardar la carga: " + error.message };
   }
 
+  if (olvidada && nueva) {
+    // Queda registrado quién la cargó por el chofer y por qué
+    await supabase.from("cargas_correcciones").insert({
+      carga_id: nueva.id,
+      campo: "Registro",
+      valor_anterior: null,
+      valor_nuevo: `Cargada por administración a nombre de ${choferNombre}`,
+      motivo,
+      corregido_por: user.id,
+      corregido_en: new Date().toISOString(),
+    });
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/historial");
   revalidatePath("/reportes");
+  if (olvidada)
+    return {
+      success: `Carga registrada a nombre de ${choferNombre} (${fmtDateTime(registrado_en)}).`,
+    };
   return { success: "¡Carga registrada con éxito!" };
 }

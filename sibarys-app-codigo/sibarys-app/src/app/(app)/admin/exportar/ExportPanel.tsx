@@ -1,52 +1,57 @@
 "use client";
 
-import { fmtDateTime, hoyLocal, inicioDelDiaLocal } from "@/lib/format";
+import { fmtDateTime, hoyLocal } from "@/lib/format";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/client";
-import type { Consumo } from "@/lib/types";
+import { traerCargasExport } from "@/lib/exportCargas";
 import Combobox from "@/components/Combobox";
 
 type Opt = { id: string; nombre: string };
 
+type Formato = "excel" | "pdf";
+
 export default function ExportPanel({
   choferes,
   vehiculos,
+  emblemas,
 }: {
   choferes: Opt[];
   vehiculos: Opt[];
+  emblemas: Opt[];
 }) {
   const [choferId, setChoferId] = useState("");
   const [vehiculoId, setVehiculoId] = useState("");
+  const [emblemaId, setEmblemaId] = useState("");
+  const [formato, setFormato] = useState<Formato>("excel");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
   const [cargando, setCargando] = useState(false);
   const [info, setInfo] = useState<{ tipo: "ok" | "err" | "vacio"; msg: string } | null>(null);
 
-  async function consultar(): Promise<Consumo[]> {
-    const supabase = createClient();
-    let q = supabase.from("consumo").select("*");
-    if (choferId) q = q.eq("chofer_id", choferId);
-    if (vehiculoId) q = q.eq("vehiculo_id", vehiculoId);
-    if (desde)
-      q = q.gte("registrado_en", inicioDelDiaLocal(desde).toISOString());
-    if (hasta)
-      q = q.lt(
-        "registrado_en",
-        new Date(inicioDelDiaLocal(hasta).getTime() + 86400000).toISOString()
-      );
-    const { data, error } = await q.order("registrado_en", {
-      ascending: false,
-    });
-    if (error) throw error;
-    return (data || []) as Consumo[];
+  /** PDF: abre el reporte en otra pestaña, listo para imprimir o guardar. */
+  function abrirPdf() {
+    const p = new URLSearchParams();
+    if (choferId) p.set("chofer", choferId);
+    if (vehiculoId) p.set("vehiculo", vehiculoId);
+    if (emblemaId) p.set("emblema", emblemaId);
+    if (desde) p.set("desde", desde);
+    if (hasta) p.set("hasta", hasta);
+    window.open(`/imprimir/cargas?${p.toString()}`, "_blank");
+    setInfo(null);
   }
 
   async function descargar() {
     setCargando(true);
     setInfo(null);
     try {
-      const cargas = await consultar();
+      const cargas = await traerCargasExport(createClient(), {
+        choferId,
+        vehiculoId,
+        emblemaId,
+        desde,
+        hasta,
+      });
       if (cargas.length === 0) {
         setInfo({ tipo: "vacio", msg: "No hay cargas para esos filtros." });
         return;
@@ -65,12 +70,13 @@ export default function ExportPanel({
         "L/100km": r.litros_por_100km != null ? Number(r.litros_por_100km) : "",
         "Tanque lleno": r.tanque_lleno ? "Sí" : "No",
         Estación: r.estacion ?? "",
+        Emblema: r.emblema ?? "",
       }));
       const ws = XLSX.utils.json_to_sheet(filas);
       ws["!cols"] = [
         { wch: 18 }, { wch: 16 }, { wch: 10 }, { wch: 20 }, { wch: 16 },
         { wch: 13 }, { wch: 13 }, { wch: 8 }, { wch: 10 }, { wch: 12 },
-        { wch: 9 }, { wch: 11 }, { wch: 16 },
+        { wch: 9 }, { wch: 11 }, { wch: 16 }, { wch: 12 },
       ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cargas");
@@ -87,6 +93,7 @@ export default function ExportPanel({
   function limpiar() {
     setChoferId("");
     setVehiculoId("");
+    setEmblemaId("");
     setDesde("");
     setHasta("");
     setInfo(null);
@@ -95,8 +102,7 @@ export default function ExportPanel({
   return (
     <div className="card space-y-4">
       <p className="text-sm text-slate-500">
-        Elegí los filtros (o dejalos vacíos para exportar todo) y descargá el
-        Excel.
+        Elegí los filtros (o dejalos vacíos para exportar todo) y el formato.
       </p>
 
       <div className="space-y-3">
@@ -115,6 +121,15 @@ export default function ExportPanel({
             options={vehiculos}
             value={vehiculoId}
             onChange={setVehiculoId}
+            placeholder="Todos — escribí para buscar…"
+          />
+        </div>
+        <div>
+          <label className="label">Emblema</label>
+          <Combobox
+            options={emblemas}
+            value={emblemaId}
+            onChange={setEmblemaId}
             placeholder="Todos — escribí para buscar…"
           />
         </div>
@@ -140,6 +155,34 @@ export default function ExportPanel({
         </div>
       </div>
 
+      <div>
+        <label className="label">Formato</label>
+        <div className="grid grid-cols-2 gap-2">
+          {(
+            [
+              ["excel", "Excel", "Archivo .xlsx"],
+              ["pdf", "PDF", "Ver e imprimir"],
+            ] as const
+          ).map(([valor, titulo, sub]) => (
+            <button
+              key={valor}
+              type="button"
+              onClick={() => setFormato(valor)}
+              className={`rounded-xl border px-3 py-2 text-left ${
+                formato === valor
+                  ? "border-brand bg-brand/5 ring-1 ring-brand"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              <span className="block text-sm font-semibold text-slate-700">
+                {titulo}
+              </span>
+              <span className="block text-xs text-slate-500">{sub}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {info ? (
         <p
           className={`rounded-lg px-3 py-2 text-sm ${
@@ -161,10 +204,14 @@ export default function ExportPanel({
         <button
           type="button"
           className="btn-primary flex-1"
-          onClick={descargar}
+          onClick={formato === "excel" ? descargar : abrirPdf}
           disabled={cargando}
         >
-          {cargando ? "Generando…" : "⬇ Descargar Excel"}
+          {cargando
+            ? "Generando…"
+            : formato === "excel"
+              ? "⬇ Descargar Excel"
+              : "🖨 Ver e imprimir PDF"}
         </button>
       </div>
     </div>
