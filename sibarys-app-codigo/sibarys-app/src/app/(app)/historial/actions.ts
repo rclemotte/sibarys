@@ -235,3 +235,62 @@ export async function editarCarga(
         : `Carga corregida (${cambios.length} datos).`,
   };
 }
+
+/**
+ * Anula (o restaura) una carga. No se borra: queda marcada con quién, cuándo
+ * y por qué, y deja de contar en consumo, reportes y exportaciones.
+ */
+export async function cambiarAnulacion(
+  _prev: EditarState,
+  formData: FormData,
+): Promise<EditarState> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sesión expirada. Volvé a iniciar sesión." };
+  const { data: perfil } = await supabase
+    .from("perfiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+  if (!tienePermiso(perfil, "puede_corregir_km"))
+    return { error: "No tenés permiso para anular cargas." };
+
+  const id = String(formData.get("id") || "");
+  const anular = formData.get("accion") === "anular";
+  const motivo = String(formData.get("motivo") || "").trim();
+  if (!id) return { error: "Carga inválida." };
+  if (motivo.length < 3) return { error: "Escribí el motivo." };
+
+  const ahora = new Date().toISOString();
+  const { error } = await supabase
+    .from("cargas")
+    .update(
+      anular
+        ? { anulada_en: ahora, anulada_por: user.id, anulada_motivo: motivo }
+        : { anulada_en: null, anulada_por: null, anulada_motivo: null },
+    )
+    .eq("id", id);
+  if (error)
+    return {
+      error: error.message.includes("anulada")
+        ? "Falta correr el SQL migracion_anular_cargas.sql en Supabase."
+        : "No se pudo guardar: " + error.message,
+    };
+
+  await supabase.from("cargas_correcciones").insert({
+    carga_id: id,
+    campo: anular ? "Anulación" : "Restauración",
+    valor_anterior: anular ? "Activa" : "Anulada",
+    valor_nuevo: anular ? "Anulada" : "Activa",
+    motivo,
+    corregido_por: user.id,
+    corregido_en: ahora,
+  });
+
+  revalidatePath("/historial");
+  revalidatePath("/dashboard");
+  revalidatePath("/reportes");
+  return { success: anular ? "Carga anulada." : "Carga restaurada." };
+}
