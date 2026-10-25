@@ -64,6 +64,14 @@ export default async function CargarPage() {
     emblema_nombre: e.emblemas?.nombre ?? null,
   }));
 
+  const { data: embData } = await supabase
+    .from("emblemas")
+    .select("id, nombre, activo")
+    .order("nombre");
+  const emblemas = (embData || [])
+    .filter((e: any) => e.activo !== false)
+    .map((e: any) => ({ id: e.id as string, nombre: e.nombre as string }));
+
   let vehiculos: VehiculoParaCarga[] = [];
 
   if (vehiculoIds.length > 0) {
@@ -135,6 +143,7 @@ export default async function CargarPage() {
         <FuelForm
           vehiculos={vehiculos}
           estaciones={estaciones}
+          emblemas={emblemas}
           choferes={puedeOlvidadas ? choferes : undefined}
         />
       )}

@@ -30,6 +30,10 @@ export async function crearCarga(
   const litros = Number(formData.get("litros"));
   const total = Number(formData.get("total"));
   const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
+  // "Otra estación": no está en la lista; se elige el emblema y se escribe el nombre
+  const estacionOtra = formData.get("estacion_otra") === "1";
+  const emblema_id = String(formData.get("emblema_id") || "").trim() || null;
+  const estacionNombre = String(formData.get("estacion_nombre") || "").trim();
   const notas = String(formData.get("notas") || "").trim() || null;
   const tanque_lleno = formData.get("tanque_lleno") === "on";
 
@@ -70,6 +74,15 @@ export async function crearCarga(
   if (!litros || litros <= 0) return { error: "Ingresá los litros cargados." };
   if (!total || total <= 0)
     return { error: "Ingresá el total cargado (₲)." };
+  if (estacionOtra) {
+    if (!emblema_id) return { error: "Elegí el emblema de la estación." };
+    if (estacionNombre.length < 2)
+      return { error: "Escribí el nombre o la zona de la estación." };
+  } else if (!estacion_id) {
+    return {
+      error: "Elegí la estación de servicio. Si no está en la lista, elegí «Otra estación».",
+    };
+  }
 
   // Precio por litro = total pagado ÷ litros cargados
   const precio_litro = Math.round((total / litros) * 100) / 100;
@@ -172,7 +185,9 @@ export async function crearCarga(
   if (repetida) return { error: MENSAJE_DUPLICADO };
 
   // Texto legacy "estacion" (lo leen historial, reportes y exportar)
-  const estacion = await textoEstacion(supabase, estacion_id);
+  const estacion = estacionOtra
+    ? estacionNombre
+    : await textoEstacion(supabase, estacion_id);
 
   const { data: nueva, error } = await supabase.from("cargas").insert({
     vehiculo_id,
@@ -183,7 +198,9 @@ export async function crearCarga(
     precio_litro,
     costo_total,
     estacion,
-    estacion_id,
+    estacion_id: estacionOtra ? null : estacion_id,
+    // Solo se manda si es "Otra estación" (así funciona aunque falte el SQL)
+    ...(estacionOtra ? { emblema_id } : {}),
     notas,
     tanque_lleno,
     registrado_en,
@@ -192,6 +209,11 @@ export async function crearCarga(
   if (error) {
     if (error.message?.includes("CARGA_DUPLICADA"))
       return { error: MENSAJE_DUPLICADO };
+    if (error.message?.includes("emblema_id"))
+      return {
+        error:
+          "Por ahora elegí una estación de la lista (falta un ajuste en la base para «Otra estación»). Avisale a administración.",
+      };
     return { error: "No se pudo guardar la carga: " + error.message };
   }
 

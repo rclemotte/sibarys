@@ -44,6 +44,11 @@ export async function editarCarga(
   const tipo_combustible_id =
     String(formData.get("tipo_combustible_id") || "") || null;
   const estacion_id = String(formData.get("estacion_id") || "").trim() || null;
+  // Emblema guardado en la carga: solo cuando no hay estación de la lista.
+  // undefined = el formulario no lo mandó (no se toca).
+  const emblemaForm = formData.has("emblema_id")
+    ? String(formData.get("emblema_id") || "") || null
+    : undefined;
   const odometro_km = num(formData.get("odometro_km"));
   const litros = num(formData.get("litros"));
   const total = num(formData.get("total"));
@@ -166,6 +171,30 @@ export async function editarCarga(
   );
   comparar("Notas", actual.notas || "—", notas || "—");
 
+  // Emblema de la carga (estación fuera de la lista). Con estación de la
+  // lista el emblema sale de la estación, así que se limpia.
+  const emblemaNuevo = estacion_id ? null : emblemaForm;
+  let cambiaEmblema = false;
+  if (emblemaNuevo !== undefined) {
+    const { data: ant } = await supabase
+      .from("cargas")
+      .select("emblema_id")
+      .eq("id", id)
+      .maybeSingle();
+    const emblemaActual = (ant as any)?.emblema_id ?? null;
+    if (ant && emblemaActual !== emblemaNuevo) {
+      cambiaEmblema = true;
+      const { data: ems } = await supabase
+        .from("emblemas")
+        .select("id, nombre")
+        .in("id", ids([emblemaActual, emblemaNuevo]));
+      const nom = (x: string | null) =>
+        (ems || []).find((e: any) => e.id === x)?.nombre ?? "—";
+      if (!estacion_id)
+        cambios.push({ campo: "Emblema", antes: nom(emblemaActual), despues: nom(emblemaNuevo) });
+    }
+  }
+
   if (cambios.length === 0) return { error: "No cambiaste ningún dato." };
 
   // 1) Registrar las correcciones primero (si falla, no se toca la carga)
@@ -201,6 +230,7 @@ export async function editarCarga(
       chofer_id,
       // Solo si cambió (así no se pierden los segundos de la hora original)
       ...(cambioFecha ? { registrado_en: fecha.toISOString() } : {}),
+      ...(cambiaEmblema ? { emblema_id: emblemaNuevo } : {}),
       tipo_combustible_id,
       estacion_id,
       estacion,

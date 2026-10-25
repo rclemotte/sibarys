@@ -21,6 +21,25 @@ async function traerTodo<T>(
   return todo;
 }
 
+/** Estación (y emblema, si la estación no está en la lista) de cada carga. */
+async function traerCargasEstacion(
+  supabase: ReturnType<typeof createClient>,
+  desdeIso: string,
+): Promise<any[]> {
+  const consulta = (columnas: string) =>
+    traerTodo<any>(
+      (a, b) =>
+        supabase
+          .from("cargas")
+          .select(columnas)
+          .gte("registrado_en", desdeIso)
+          .order("registrado_en", { ascending: true })
+          .range(a, b) as unknown as PromiseLike<{ data: any[] | null }>,
+    );
+  const prueba = await supabase.from("cargas").select("emblema_id").limit(1);
+  return consulta(prueba.error ? "id, estacion_id" : "id, estacion_id, emblema_id");
+}
+
 /**
  * Cargas con su recorrido y consumo. Usa reporte_consumo(), que calcula el
  * recorrido con el historial completo de cada vehículo y devuelve solo lo
@@ -32,7 +51,7 @@ async function traerConsumo(
   desdeIso: string,
 ): Promise<any[]> {
   const columnas =
-    "id, registrado_en, vehiculo_id, chofer_id, chofer_nombre, combustible_nombre, litros, costo_total, odometro_km, distancia_km, tanque_lleno";
+    "id, registrado_en, vehiculo_id, chofer_id, chofer_nombre, combustible_nombre, litros, costo_total, odometro_km, distancia_km, tanque_lleno, estacion";
   const prueba = await supabase
     .rpc("reporte_consumo", { p_desde: desdeIso })
     .select(columnas)
@@ -70,19 +89,14 @@ export default async function ReportesPage() {
     { data: vehiculos },
     { data: empresas },
     { data: estaciones },
+    { data: emblemasCat },
   ] = await Promise.all([
     traerConsumo(supabase, `${desde}T00:00:00-03:00`),
-    traerTodo<any>((a, b) =>
-      supabase
-        .from("cargas")
-        .select("id, estacion_id")
-        .gte("registrado_en", `${desde}T00:00:00-03:00`)
-        .order("registrado_en", { ascending: true })
-        .range(a, b),
-    ),
+    traerCargasEstacion(supabase, `${desde}T00:00:00-03:00`),
     supabase.from("vehiculos").select("*"),
     supabase.from("empresas").select("id, nombre"),
     supabase.from("estaciones_servicio").select("id, nombre, emblemas(nombre)"),
+    supabase.from("emblemas").select("id, nombre"),
   ]);
 
   const vehPorId = new Map(
@@ -96,6 +110,13 @@ export default async function ReportesPage() {
   );
   const estacionDeCarga = new Map(
     cargas.map((c: any) => [c.id as string, c.estacion_id as string | null]),
+  );
+  // "Otra estación": el emblema viene en la carga
+  const emblemaDeCarga = new Map(
+    cargas.map((c: any) => [c.id as string, (c.emblema_id as string | null) ?? null]),
+  );
+  const nombreEmblema = new Map(
+    (emblemasCat || []).map((e: any) => [e.id as string, e.nombre as string]),
   );
 
   // Modelos escritos distinto ("MASTER III" / "Master III") se agrupan juntos
@@ -132,8 +153,11 @@ export default async function ReportesPage() {
       chofer_id: c.chofer_id,
       chofer: c.chofer_nombre ?? "—",
       combustible: c.combustible_nombre ?? "Sin combustible",
-      estacion: est?.nombre ?? "Sin estación",
-      emblema: est?.emblemas?.nombre ?? "Sin estación",
+      estacion: est?.nombre ?? (c.estacion || "Sin estación"),
+      emblema:
+        est?.emblemas?.nombre ??
+        nombreEmblema.get(emblemaDeCarga.get(c.id) ?? "") ??
+        "Sin estación",
       litros: Number(c.litros) || 0,
       gasto: Number(c.costo_total) || 0,
       km: Number(c.odometro_km) || 0,

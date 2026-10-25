@@ -7,6 +7,9 @@ import { crearCarga, type CargarState } from "./actions";
 import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
 import Combobox from "@/components/Combobox";
 
+/** Opción especial del buscador: la estación no está en la lista. */
+const OTRA = "__otra__";
+
 // Muestra un número entero con separadores de miles (ej. 250000 -> "250.000")
 function fmtMiles(raw: string): string {
   if (!raw) return "";
@@ -25,10 +28,12 @@ function Submit() {
 export default function FuelForm({
   vehiculos,
   estaciones,
+  emblemas,
   choferes,
 }: {
   vehiculos: VehiculoParaCarga[];
   estaciones: EstacionParaCarga[];
+  emblemas: { id: string; nombre: string }[];
   /** Solo para administración: permite registrar cargas olvidadas. */
   choferes?: { id: string; nombre: string }[];
 }) {
@@ -47,6 +52,8 @@ export default function FuelForm({
   const [litros, setLitros] = useState("");
   const [total, setTotal] = useState(""); // solo dígitos
   const [estacionId, setEstacionId] = useState("");
+  const [faltaEstacion, setFaltaEstacion] = useState(false);
+  const esOtra = estacionId === OTRA;
   const [olvidada, setOlvidada] = useState(false);
   const [choferId, setChoferId] = useState("");
   const [fecha, setFecha] = useState("");
@@ -67,13 +74,15 @@ export default function FuelForm({
 
   // Opciones del buscador de estación (memorizadas para no reiniciar el texto)
   const opcionesEstaciones = useMemo(
-    () =>
-      estaciones.map((e) => ({
+    () => [
+      ...estaciones.map((e) => ({
         id: e.id,
         nombre: `${e.nombre}${
           e.emblema_nombre ? ` — ${e.emblema_nombre}` : ""
         }${e.localidad ? ` (${e.localidad})` : ""}`,
       })),
+      { id: OTRA, nombre: "➕ Otra estación (no está en la lista)" },
+    ],
     [estaciones]
   );
 
@@ -111,6 +120,11 @@ export default function FuelForm({
       onSubmit={(e) => {
         if (enviando.current) {
           e.preventDefault();
+          return;
+        }
+        if (!estacionId) {
+          e.preventDefault();
+          setFaltaEstacion(true);
           return;
         }
         enviando.current = true;
@@ -330,18 +344,59 @@ export default function FuelForm({
         </div>
 
         <div>
-          <label className="label">
-            Estación <span className="text-slate-300">(opc.)</span>
-          </label>
-          <input type="hidden" name="estacion_id" value={estacionId} />
+          <label className="label">Estación</label>
+          <input type="hidden" name="estacion_id" value={esOtra ? "" : estacionId} />
+          {esOtra ? <input type="hidden" name="estacion_otra" value="1" /> : null}
           <Combobox
             options={opcionesEstaciones}
             value={estacionId}
-            onChange={setEstacionId}
+            onChange={(id) => {
+              setEstacionId(id);
+              if (id) setFaltaEstacion(false);
+            }}
             placeholder="Buscar estación…"
-            allLabel="Sin especificar"
+            allLabel="Elegí la estación…"
           />
+          {faltaEstacion ? (
+            <p className="mt-1 text-xs font-medium text-red-600">
+              Elegí la estación. Si no está en la lista, elegí «Otra estación».
+            </p>
+          ) : null}
         </div>
+
+        {esOtra ? (
+          <div className="grid grid-cols-2 gap-3 rounded-xl bg-amber-50 p-3">
+            <div>
+              <label className="label" htmlFor="emblema_id">
+                Emblema
+              </label>
+              <select id="emblema_id" name="emblema_id" className="field" defaultValue="" required>
+                <option value="" disabled>
+                  Elegí…
+                </option>
+                {emblemas.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label" htmlFor="estacion_nombre">
+                Nombre o zona
+              </label>
+              <input
+                id="estacion_nombre"
+                name="estacion_nombre"
+                type="text"
+                className="field"
+                placeholder="Ej. Ruta 2, Itauguá"
+                minLength={2}
+                required
+              />
+            </div>
+          </div>
+        ) : null}
 
         {olvidada ? null : (
         <div>

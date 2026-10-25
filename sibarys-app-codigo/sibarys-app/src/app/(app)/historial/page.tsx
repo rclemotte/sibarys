@@ -199,6 +199,7 @@ export default async function HistorialPage({
   let optCombustibles: { id: string; nombre: string }[] = [];
   let optEstaciones: { id: string; nombre: string }[] = [];
   let optChoferes: { id: string; nombre: string }[] = [];
+  let optEmblemas: { id: string; nombre: string }[] = [];
   if (puedeCorregir && idsCargas.length > 0) {
     const [
       { data: crudas },
@@ -206,13 +207,20 @@ export default async function HistorialPage({
       { data: ts },
       { data: es },
       { data: ps },
+      { data: embs },
     ] = await Promise.all([
-        supabase
-          .from("cargas")
-          .select(
-            "id, vehiculo_id, chofer_id, registrado_en, tipo_combustible_id, estacion_id, odometro_km, litros, costo_total, tanque_lleno, notas",
-          )
-          .in("id", idsCargas),
+        (async () => {
+          const base =
+            "id, vehiculo_id, chofer_id, registrado_en, tipo_combustible_id, estacion_id, odometro_km, litros, costo_total, tanque_lleno, notas";
+          const r = await supabase
+            .from("cargas")
+            .select(base + ", emblema_id")
+            .in("id", idsCargas);
+          // Si todavía no existe la columna emblema_id (falta el SQL)
+          return r.error
+            ? await supabase.from("cargas").select(base).in("id", idsCargas)
+            : r;
+        })(),
         supabase
           .from("vehiculos")
           .select("id, nombre, patente")
@@ -227,7 +235,9 @@ export default async function HistorialPage({
           .from("perfiles")
           .select("id, nombre_completo")
           .order("nombre_completo"),
+        supabase.from("emblemas").select("id, nombre").order("nombre"),
       ]);
+    optEmblemas = (embs || []).map((e: any) => ({ id: e.id, nombre: e.nombre }));
     optChoferes = (ps || []).map((p: any) => ({
       id: p.id,
       nombre: p.nombre_completo || "(sin nombre)",
@@ -512,6 +522,7 @@ export default async function HistorialPage({
                     combustibles={optCombustibles}
                     estaciones={optEstaciones}
                     choferes={optChoferes}
+                    emblemas={optEmblemas}
                   />
                 ) : null}
                 {puedeCorregir ? <AnularCargaForm id={r.id} anular /> : null}

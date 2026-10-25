@@ -15,6 +15,7 @@ export type CargaEditable = {
   registrado_en: string;
   tipo_combustible_id: string | null;
   estacion_id: string | null;
+  emblema_id?: string | null; // solo si la estación no está en la lista
   odometro_km: number;
   litros: number;
   costo_total: number | null;
@@ -38,12 +39,14 @@ export default function EditarCargaForm({
   combustibles,
   estaciones,
   choferes,
+  emblemas,
 }: {
   carga: CargaEditable;
   vehiculos: Opt[];
   combustibles: Opt[];
   estaciones: Opt[];
   choferes: Opt[];
+  emblemas: Opt[];
 }) {
   const [open, setOpen] = useState(false);
   const [estacionId, setEstacionId] = useState(carga.estacion_id ?? "");
@@ -199,6 +202,20 @@ export default function EditarCargaForm({
           allLabel="Sin especificar"
         />
       </div>
+
+      {!estacionId && carga.emblema_id !== undefined ? (
+        <div>
+          <label className="label">Emblema (estación fuera de la lista)</label>
+          <select name="emblema_id" className="field" defaultValue={carga.emblema_id ?? ""}>
+            <option value="">Sin emblema</option>
+            {emblemas.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <label className="flex items-center gap-2 text-sm text-slate-600">
         <input

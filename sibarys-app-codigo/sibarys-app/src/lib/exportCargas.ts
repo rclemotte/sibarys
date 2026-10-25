@@ -13,7 +13,10 @@ export type FiltrosExport = {
   hasta?: string;
 };
 
-export type FilaExport = Consumo & { emblema: string | null };
+export type FilaExport = Consumo & {
+  emblema: string | null;
+  emblema_id: string | null;
+};
 
 const LOTE = 1000; // límite de filas por consulta de Supabase
 
@@ -45,36 +48,48 @@ export async function traerCargasExport(
   }
   if (cargas.length === 0) return [];
 
-  // Estación de cada carga (la vista consumo no la trae) y su emblema
-  const estacionDe = new Map<string, string | null>();
+  // Estación de cada carga (la vista consumo no la trae) y su emblema.
+  // Si la estación no estaba en la lista ("Otra estación"), el emblema
+  // viene en la propia carga (cargas.emblema_id).
+  const estacionDe = new Map<string, { est: string | null; emb: string | null }>();
   const ids = cargas.map((c) => c.id);
+  let conEmblema = true;
   for (let i = 0; i < ids.length; i += 200) {
-    const { data, error } = await supabase
-      .from("cargas")
-      .select("id, estacion_id")
-      .in("id", ids.slice(i, i + 200));
+    const lote = ids.slice(i, i + 200);
+    const columnas: string = conEmblema ? "id, estacion_id, emblema_id" : "id, estacion_id";
+    let { data, error } = (await supabase.from("cargas").select(columnas).in("id", lote)) as {
+      data: any[] | null;
+      error: any;
+    };
+    if (error && conEmblema) {
+      // La columna emblema_id todavía no existe (falta el SQL)
+      conEmblema = false;
+      ({ data, error } = (await supabase.from("cargas").select("id, estacion_id").in("id", lote)) as {
+        data: any[] | null;
+        error: any;
+      });
+    }
     if (error) throw error;
-    (data || []).forEach((c: any) => estacionDe.set(c.id, c.estacion_id));
+    (data || []).forEach((c: any) =>
+      estacionDe.set(c.id, { est: c.estacion_id ?? null, emb: c.emblema_id ?? null }),
+    );
   }
-  const { data: est, error: errEst } = await supabase
-    .from("estaciones_servicio")
-    .select("id, emblema_id, emblemas(nombre)");
+  const [{ data: est, error: errEst }, { data: embs }] = await Promise.all([
+    supabase.from("estaciones_servicio").select("id, emblema_id"),
+    supabase.from("emblemas").select("id, nombre"),
+  ]);
   if (errEst) throw errEst;
-  const emblemaDe = new Map<string, { id: string | null; nombre: string | null }>(
-    (est || []).map((e: any) => [
-      e.id as string,
-      { id: e.emblema_id ?? null, nombre: e.emblemas?.nombre ?? null },
-    ]),
+  const nombreEmblema = new Map((embs || []).map((e: any) => [e.id as string, e.nombre as string]));
+  const emblemaDeEstacion = new Map<string, string | null>(
+    (est || []).map((e: any) => [e.id as string, e.emblema_id ?? null]),
   );
 
-  const filas = cargas.map((c) => {
-    const estId = estacionDe.get(c.id);
-    const emb = estId ? emblemaDe.get(estId) : undefined;
-    return { ...c, emblema: emb?.nombre ?? null, _emblemaId: emb?.id ?? null };
+  const filas: FilaExport[] = cargas.map((c) => {
+    const x = estacionDe.get(c.id);
+    const embId = (x?.est ? emblemaDeEstacion.get(x.est) : null) ?? x?.emb ?? null;
+    return { ...c, emblema_id: embId, emblema: embId ? (nombreEmblema.get(embId) ?? null) : null };
   });
-  return (f.emblemaId ? filas.filter((r) => r._emblemaId === f.emblemaId) : filas).map(
-    ({ _emblemaId, ...r }) => r,
-  );
+  return f.emblemaId ? filas.filter((r) => r.emblema_id === f.emblemaId) : filas;
 }
 
 /** Totales de un conjunto de cargas (para el encabezado del PDF). */
