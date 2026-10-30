@@ -9,6 +9,7 @@ export const REPORTES_TABS = [
   { href: "/reportes/detalle", label: "Detalle de cargas" },
   { href: "/reportes/planilla", label: "Planilla de combustible" },
   { href: "/reportes/precios", label: "Control de precios" },
+  { href: "/reportes/km-alquilados", label: "Km alquilados" },
   { href: "/reportes/listados", label: "Listados" },
 ];
 

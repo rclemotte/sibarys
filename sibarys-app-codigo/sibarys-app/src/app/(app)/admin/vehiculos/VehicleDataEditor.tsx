@@ -5,6 +5,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { guardarDatosVehiculo, type VehState } from "./actions";
 import type { Empresa, Vehiculo } from "@/lib/types";
 import { referenciaL100 } from "@/lib/consumo";
+import KmLimiteCampos from "./KmLimiteCampos";
 
 function Guardar() {
   const { pending } = useFormStatus();
@@ -39,7 +40,7 @@ export default function VehicleDataEditor({
         onClick={() => setOpen((o) => !o)}
         className="text-xs font-medium text-brand"
       >
-        {open ? "Cerrar datos" : "Editar datos (patente, nombre, tanque, consumo, alquiler)"}
+        {open ? "Cerrar datos" : "Editar datos (patente, nombre, tanque, consumo, alquiler, límite de km)"}
       </button>
 
       {open ? (
@@ -120,6 +121,13 @@ export default function VehicleDataEditor({
                     </option>
                   ))}
                 </select>
+                <input type="hidden" name="tenia_km" value={vehiculo.km_control_desde ? "1" : "0"} />
+                <KmLimiteCampos
+                  desde={vehiculo.km_control_desde}
+                  limite={vehiculo.km_limite}
+                  aviso={vehiculo.km_aviso}
+                  inicial={vehiculo.km_inicial}
+                />
               </div>
             ) : null}
           </div>

@@ -6,6 +6,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { crearCarga, type CargarState } from "./actions";
 import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
 import Combobox from "@/components/Combobox";
+import ComprobanteCompartir from "./ComprobanteCompartir";
 
 /** Opción especial del buscador: la estación no está en la lista. */
 const OTRA = "__otra__";
@@ -138,6 +139,9 @@ export default function FuelForm({
           </span>
           <span className="font-semibold">{state.success}</span>
         </div>
+      ) : null}
+      {state.success && state.comprobante ? (
+        <ComprobanteCompartir comprobante={state.comprobante} />
       ) : null}
       {state.error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">

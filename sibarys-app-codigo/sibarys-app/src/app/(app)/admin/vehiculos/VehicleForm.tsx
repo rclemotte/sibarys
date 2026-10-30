@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import KmLimiteCampos from "./KmLimiteCampos";
 import { useFormState, useFormStatus } from "react-dom";
 import { crearVehiculo, type VehState } from "./actions";
 import type { TipoCombustible, Marca, Empresa } from "@/lib/types";
@@ -141,6 +142,7 @@ export default function VehicleForm({
                 No hay empresas cargadas. Agregalas en la pestaña Empresas.
               </p>
             ) : null}
+            <KmLimiteCampos />
           </div>
         ) : null}
       </div>

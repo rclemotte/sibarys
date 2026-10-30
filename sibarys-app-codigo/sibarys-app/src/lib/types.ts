@@ -91,6 +91,11 @@ export interface Vehiculo {
   empresa_id: string | null;
   consumo_promedio_asignado: number | null; // viejo, en km/l (ya no se usa)
   consumo_ref_l100km?: number | null; // consumo de referencia en L/100 km
+  // Límite de km del alquiler (migracion_km_alquilados.sql)
+  km_control_desde?: string | null;
+  km_limite?: number | null;
+  km_aviso?: number | null;
+  km_inicial?: number | null;
   activo: boolean;
   creado_en: string;
 }

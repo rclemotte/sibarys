@@ -7,7 +7,28 @@ import { createClient } from "@/lib/supabase/server";
 import { perfilActual, tienePermiso } from "@/lib/permisos";
 import { fmtDateTime, fmtNumber, instanteLocal } from "@/lib/format";
 
-export type CargarState = { error?: string; success?: string };
+/** Datos del comprobante que el chofer comparte por WhatsApp. */
+export type Comprobante = {
+  numero: string;
+  fecha: string; // ISO
+  vehiculo: string;
+  patente: string;
+  chofer: string;
+  estacion: string | null;
+  combustible: string | null;
+  litros: number;
+  precioLitro: number;
+  total: number;
+  odometro: number;
+  kmRecorridos: number | null;
+  tanqueLleno: boolean;
+};
+
+export type CargarState = {
+  error?: string;
+  success?: string;
+  comprobante?: Comprobante;
+};
 
 const MINUTOS_DUPLICADO = 10;
 const MENSAJE_DUPLICADO =
@@ -91,7 +112,7 @@ export async function crearCarga(
   // Los litros no pueden superar la capacidad del tanque (+10%)
   const { data: veh } = await supabase
     .from("vehiculos")
-    .select("nombre, capacidad_tanque_litros")
+    .select("nombre, patente, capacidad_tanque_litros")
     .eq("id", vehiculo_id)
     .maybeSingle();
   if (veh) {
@@ -230,12 +251,39 @@ export async function crearCarga(
     });
   }
 
+  // Comprobante para compartir (nombres de chofer y combustible)
+  const [{ data: tc }, { data: ch }] = await Promise.all([
+    supabase.from("tipos_combustible").select("nombre").eq("id", tipo_combustible_id).maybeSingle(),
+    olvidada
+      ? Promise.resolve({ data: null })
+      : supabase.from("perfiles").select("nombre_completo").eq("id", user.id).maybeSingle(),
+  ]);
+  const comprobante: Comprobante | undefined = nueva
+    ? {
+        numero: String(nueva.id).slice(0, 8).toUpperCase(),
+        fecha: registrado_en,
+        vehiculo: veh?.nombre ?? "",
+        patente: (veh as any)?.patente ?? "",
+        chofer: olvidada ? choferNombre : ((ch as any)?.nombre_completo ?? ""),
+        estacion: estacion ?? null,
+        combustible: tc?.nombre ?? null,
+        litros,
+        precioLitro: precio_litro,
+        total: costo_total,
+        odometro: odometro_km,
+        kmRecorridos:
+          !olvidada && ultimoKm !== null && odometro_km > ultimoKm ? odometro_km - ultimoKm : null,
+        tanqueLleno: tanque_lleno,
+      }
+    : undefined;
+
   revalidatePath("/dashboard");
   revalidatePath("/historial");
   revalidatePath("/reportes");
   if (olvidada)
     return {
       success: `Carga registrada a nombre de ${choferNombre} (${fmtDateTime(registrado_en)}).`,
+      comprobante,
     };
-  return { success: "¡Carga registrada con éxito!" };
+  return { success: "¡Carga registrada con éxito!", comprobante };
 }

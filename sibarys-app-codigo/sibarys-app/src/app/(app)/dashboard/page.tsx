@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { perfilActual, tienePermiso } from "@/lib/permisos";
+import { esAdminRol, perfilActual, tienePermiso } from "@/lib/permisos";
+import { traerKmAlquilados, type KmAlquilado } from "@/lib/kmAlquilados";
 import {
   estadoDe,
   ordenarPorUrgencia,
@@ -146,6 +147,15 @@ export default async function DashboardPage() {
       );
   }
 
+  // ---- Límite de km de alquilados (administración) ----------------------
+  let kmAviso: KmAlquilado[] = [];
+  if (esAdminRol(yo?.rol)) {
+    const km = await traerKmAlquilados(supabase);
+    kmAviso = (km || [])
+      .filter((v) => v.estado === "aviso" || v.estado === "excedido")
+      .sort((a, b) => (a.restantes ?? 0) - (b.restantes ?? 0));
+  }
+
   const litrosMes = cargas.reduce((s, r) => s + Number(r.litros), 0);
   const costoMes = cargas.reduce((s, r) => s + Number(r.costo_total || 0), 0);
   // Consumo del mes: litros de los tramos ÷ km recorridos (igual que Reportes)
@@ -186,6 +196,35 @@ export default async function DashboardPage() {
                 className="inline-block pt-1 text-xs font-semibold text-amber-800 underline"
               >
                 Ver detalle en Reportes
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {kmAviso.length > 0 ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <span className="text-lg" aria-hidden="true">
+              🚗
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-red-800">
+                Alquilados cerca del límite de km
+              </p>
+              {kmAviso.map((v) => (
+                <p key={v.id} className="text-xs text-red-700">
+                  <span className="font-semibold">{v.nombre}</span>:{" "}
+                  {v.estado === "excedido"
+                    ? `se pasó ${fmtNumber(-(v.restantes ?? 0), 0)} km del límite de ${fmtNumber(v.limite, 0)}`
+                    : `faltan ${fmtNumber(v.restantes ?? 0, 0)} km para el límite de ${fmtNumber(v.limite, 0)}`}
+                </p>
+              ))}
+              <Link
+                href="/reportes/km-alquilados"
+                className="inline-block pt-1 text-xs font-semibold text-red-800 underline"
+              >
+                Ver km de alquilados
               </Link>
             </div>
           </div>
