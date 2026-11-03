@@ -70,7 +70,7 @@ export default function TarifaForms({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="label">Precio por litro (₲)</label>
+          <label className="label">Precio por litro (Gs.)</label>
           <input type="hidden" name="precio" value={precio} />
           <input
             type="text"

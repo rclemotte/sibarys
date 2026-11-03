@@ -81,10 +81,32 @@ export function fmtNumber(n: number | null | undefined, digits = 0): string {
   });
 }
 
-/** Monto en guaraníes, sin decimales: 41582627 -> "₲ 41.582.627". */
+/** Monto en guaraníes, sin decimales: 41582627 -> "Gs. 41.582.627". */
 export function fmtMoney(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
-  return `₲ ${Math.round(n).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
+  return `Gs. ${Math.round(n).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`;
+}
+
+/** Fecha amable en hora de Paraguay: "Martes 3 de noviembre". */
+export function fmtFechaLarga(d: Date | string = new Date()): string {
+  const txt = new Date(d).toLocaleDateString("es-AR", {
+    timeZone: ZONA_HORARIA,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const limpio = txt.replace(",", "");
+  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+}
+
+/** "Buen día" / "Buenas tardes" / "Buenas noches" según la hora de Paraguay. */
+export function saludoSegunHora(d: Date = new Date()): string {
+  const h = Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: ZONA_HORARIA, hour: "numeric", hourCycle: "h23" }).format(d),
+  );
+  if (h >= 5 && h < 12) return "Buen día";
+  if (h >= 12 && h < 20) return "Buenas tardes";
+  return "Buenas noches";
 }
 
 export function fmtDate(d: string | null | undefined): string {
@@ -108,4 +130,10 @@ export function fmtDateTime(d: string | null | undefined): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+/** Dos letras para el avatar: "Hector Caballero" -> "HC". */
+export function iniciales(nombre: string): string {
+  const p = nombre.trim().split(/\s+/).filter(Boolean);
+  return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "S";
 }

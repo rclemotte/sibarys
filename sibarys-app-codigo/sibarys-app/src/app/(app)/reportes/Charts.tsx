@@ -37,44 +37,44 @@ export function TiempoChart({
     );
   const fmt = (v: number) =>
     metrica === "gasto"
-      ? `₲ ${v.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
+      ? `Gs. ${v.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
       : `${v.toLocaleString("es-AR", { maximumFractionDigits: 1 })} L`;
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-        <CartesianGrid vertical={false} stroke="#e2e8f0" />
+        <CartesianGrid vertical={false} stroke="#F1ECE4" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "#64748b" }}
+          tick={{ fontSize: 11, fill: "#A2958F" }}
           tickLine={false}
-          axisLine={{ stroke: "#cbd5e1" }}
+          axisLine={{ stroke: "#EAE3D7" }}
           interval="preserveStartEnd"
           minTickGap={12}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "#64748b" }}
+          tick={{ fontSize: 11, fill: "#A2958F" }}
           tickLine={false}
           axisLine={false}
           width={52}
           tickFormatter={(v: number) => abreviar(v)}
         />
         <Tooltip
-          cursor={{ fill: "rgba(15,118,110,0.08)" }}
+          cursor={{ fill: "rgba(163,34,42,0.08)" }}
           formatter={(v: number, _n, item: any) => [
             fmt(v),
             `${metrica === "gasto" ? "Gasto" : "Litros"} · ${item.payload.cargas} carga(s)`,
           ]}
-          labelStyle={{ color: "#0f172a", fontWeight: 600 }}
+          labelStyle={{ color: "#2B2627", fontWeight: 600 }}
           contentStyle={{
-            borderRadius: 12,
+            borderRadius: 16, boxShadow: "0 10px 30px -12px rgba(43,38,39,0.25)", border: "none",
             fontSize: 12,
-            borderColor: "#e2e8f0",
+            borderColor: "#F1ECE4",
           }}
         />
         <Bar
           dataKey={metrica}
-          fill="#0f766e"
-          radius={[4, 4, 0, 0]}
+          fill="#A3222A"
+          radius={[8, 8, 8, 8]}
           maxBarSize={36}
         />
       </BarChart>
@@ -205,7 +205,7 @@ export function ConsumoChart({
           data={puntos}
           margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
         >
-          <CartesianGrid vertical={false} stroke="#e2e8f0" />
+          <CartesianGrid vertical={false} stroke="#F1ECE4" />
           <XAxis
             dataKey="t"
             type="number"
@@ -213,14 +213,14 @@ export function ConsumoChart({
             domain={[tMin - margen, tMax + margen]}
             ticks={ticks}
             tickFormatter={fmtEje}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#A2958F" }}
             tickLine={false}
-            axisLine={{ stroke: "#cbd5e1" }}
+            axisLine={{ stroke: "#EAE3D7" }}
             minTickGap={24}
           />
           <YAxis
             dataKey="l100"
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tick={{ fontSize: 11, fill: "#A2958F" }}
             tickLine={false}
             axisLine={false}
             width={44}
@@ -228,25 +228,25 @@ export function ConsumoChart({
           />
           <Tooltip
             content={<TooltipConsumo />}
-            cursor={{ stroke: "#94a3b8", strokeDasharray: "3 3" }}
+            cursor={{ stroke: "#A2958F", strokeDasharray: "3 3" }}
           />
           {ref != null ? (
             <ReferenceLine
               y={ref}
-              stroke="#64748b"
+              stroke="#A2958F"
               strokeDasharray="4 4"
               label={{
                 value: `Referencia ${ref.toLocaleString("es-AR")}`,
                 position: "insideTopRight",
                 fontSize: 11,
-                fill: "#64748b",
+                fill: "#A2958F",
               }}
             />
           ) : null}
           {unVehiculo ? (
             <Line
               dataKey="l100"
-              stroke="#0f766e"
+              stroke="#A3222A"
               strokeWidth={2}
               dot={false}
               activeDot={false}
@@ -256,7 +256,7 @@ export function ConsumoChart({
           <Scatter
             data={puntos}
             dataKey="l100"
-            fill="#0f766e"
+            fill="#A3222A"
             stroke="#ffffff"
             strokeWidth={2}
             isAnimationActive={false}
@@ -265,7 +265,7 @@ export function ConsumoChart({
       </ResponsiveContainer>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#0f766e]" />{" "}
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#A3222A]" />{" "}
           Carga
         </span>
         {ref != null ? (

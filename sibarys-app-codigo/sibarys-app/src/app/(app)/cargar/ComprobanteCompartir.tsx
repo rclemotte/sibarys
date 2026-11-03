@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Share2 } from "lucide-react";
 import { fmtDateTime, fmtMoney, fmtNumber } from "@/lib/format";
 import type { Comprobante } from "./actions";
 
 const ANCHO = 1080;
 const FUENTE = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
-const TEAL = "#0f766e";
-const TEAL_OSCURO = "#0b544e";
+const TEAL = "#A3222A";
+const TEAL_OSCURO = "#7A1A22";
 const GRIS = "#64748b";
 const TEXTO = "#0f172a";
 
@@ -61,7 +62,7 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
   if (!ctx) return Promise.resolve(null);
 
   // Fondo y encabezado
-  ctx.fillStyle = "#f1f5f9";
+  ctx.fillStyle = "#FAF7F2";
   ctx.fillRect(0, 0, ANCHO, alto);
   ctx.fillStyle = TEAL;
   ctx.fillRect(0, 0, ANCHO, 230);
@@ -106,7 +107,7 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
   y += 50;
   ctx.fillStyle = TEAL_OSCURO;
   caja(ctx, x, y, w, 130, 28);
-  ctx.fillStyle = "#ccfbf1";
+  ctx.fillStyle = "#F8E7E6";
   ctx.font = `600 36px ${FUENTE}`;
   ctx.fillText("Total pagado", x + 40, y + 80);
   ctx.fillStyle = "#ffffff";
@@ -190,29 +191,30 @@ export default function ComprobanteCompartir({ comprobante }: { comprobante: Com
   }
 
   return (
-    <div className="card space-y-3 border-emerald-200">
-      <p className="text-sm font-semibold text-slate-700">
-        Mandá el comprobante al grupo de la oficina
-      </p>
+    <div className="card space-y-4">
+      <div>
+        <p className="font-display text-lg font-extrabold">Comprobante de la carga</p>
+        <p className="subtitulo">Mandalo al grupo de la oficina.</p>
+      </div>
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={url}
           alt="Comprobante de la carga"
-          className="mx-auto w-full max-w-xs rounded-lg border border-slate-200"
+          className="mx-auto w-full max-w-xs rounded-2xl shadow-suave"
         />
       ) : (
-        <div className="h-40 animate-pulse rounded-lg bg-slate-100" />
+        <div className="mx-auto h-80 w-full max-w-xs animate-pulse rounded-2xl bg-linea/70" />
       )}
       <button
         type="button"
-        className="btn-primary flex w-full items-center justify-center gap-2 !bg-[#25D366] hover:!bg-[#1ebe5b]"
+        className="btn w-full bg-[#25D366] text-white shadow-[0_10px_22px_-10px_rgba(37,211,102,0.7)] hover:brightness-105"
         onClick={compartir}
         disabled={!archivo}
       >
-        <span aria-hidden="true">📲</span> Compartir por WhatsApp
+        <Share2 size={20} strokeWidth={2.4} /> Compartir por WhatsApp
       </button>
-      {aviso ? <p className="text-xs text-slate-500">{aviso}</p> : null}
+      {aviso ? <p className="text-center text-xs font-semibold text-suave">{aviso}</p> : null}
     </div>
   );
 }

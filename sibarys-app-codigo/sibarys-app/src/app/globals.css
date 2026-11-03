@@ -8,36 +8,83 @@
 
 html,
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-fondo font-sans font-semibold text-tinta antialiased;
 }
 
-/* Inputs consistentes y cómodos para el celular */
+h1, h2, h3 {
+  @apply font-display;
+}
+
+@layer components {
+/* ---------- Campos ---------- */
 .field {
-  @apply w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base
-         outline-none focus:border-brand focus:ring-2 focus:ring-brand/30;
+  @apply min-h-[48px] w-full rounded-boton border-2 border-linea bg-white px-4 py-2.5 text-base font-semibold text-tinta
+         outline-none transition placeholder:font-semibold placeholder:text-tenue/60
+         focus:border-brand focus:ring-4 focus:ring-brand/15
+         disabled:bg-neutro-suave disabled:text-suave;
 }
 
 .label {
-  @apply mb-1 block text-sm font-medium text-slate-600;
+  @apply mb-1.5 block text-sm font-extrabold text-tinta;
 }
 
+/* ---------- Botones ---------- */
 .btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3
-         text-base font-semibold transition active:scale-[0.98] disabled:opacity-50;
+  @apply inline-flex min-h-[48px] select-none items-center justify-center gap-2 rounded-boton px-5 py-3
+         text-base font-extrabold transition active:scale-[0.98]
+         disabled:pointer-events-none disabled:opacity-50;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3
-         text-base font-semibold transition active:scale-[0.98] disabled:opacity-50
-         bg-brand text-white hover:bg-brand-dark;
+  @apply btn bg-marca text-white shadow-boton hover:brightness-110;
 }
 
 .btn-ghost {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3
-         text-base font-semibold transition active:scale-[0.98] disabled:opacity-50
-         border border-slate-300 bg-white text-slate-700 hover:bg-slate-100;
+  @apply btn border-2 border-linea bg-white text-tinta hover:border-brand/40 hover:bg-brand-suave/40;
 }
 
+.btn-suave {
+  @apply btn bg-brand-suave text-brand-dark hover:bg-brand-suave/70;
+}
+
+.btn-chico {
+  @apply inline-flex min-h-[36px] select-none items-center justify-center gap-1.5 rounded-xl px-3 py-1.5
+         text-sm font-extrabold transition active:scale-[0.97] disabled:opacity-50;
+}
+
+/* ---------- Tarjetas ---------- */
 .card {
-  @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm;
+  @apply rounded-tarjeta bg-white p-5 shadow-suave;
+}
+
+/* ---------- Chips, etiquetas y textos ---------- */
+.chip {
+  @apply inline-flex min-h-[40px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-white px-4 py-2
+         text-sm font-extrabold text-suave shadow-suave transition active:scale-[0.97] hover:text-tinta;
+}
+
+.chip-on {
+  @apply chip bg-marca text-white shadow-boton hover:text-white;
+}
+
+.etiqueta {
+  @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-extrabold;
+}
+
+.titulo {
+  @apply font-display text-2xl font-extrabold leading-tight text-tinta;
+}
+
+.subtitulo {
+  @apply text-sm font-semibold text-suave;
+}
+
+}
+
+/* Scroll horizontal sin barra (chips) */
+.sin-barra {
+  scrollbar-width: none;
+}
+.sin-barra::-webkit-scrollbar {
+  display: none;
 }

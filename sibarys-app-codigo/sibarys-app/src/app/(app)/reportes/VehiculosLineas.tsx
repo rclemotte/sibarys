@@ -156,7 +156,7 @@ export default function VehiculosLineas({
                           x2={ANCHO}
                           y1={y(v.ref_l100)}
                           y2={y(v.ref_l100)}
-                          stroke="#94a3b8"
+                          stroke="#A2958F"
                           strokeDasharray="4 3"
                           strokeWidth={1}
                           vectorEffect="non-scaling-stroke"
@@ -166,7 +166,7 @@ export default function VehiculosLineas({
                         <path
                           d={camino}
                           fill="none"
-                          stroke="#0f766e"
+                          stroke="#A3222A"
                           strokeWidth={2}
                           strokeLinejoin="round"
                           vectorEffect="non-scaling-stroke"
@@ -180,8 +180,8 @@ export default function VehiculosLineas({
                           r={2.6}
                           fill={
                             p.l100 > yMax || p.l100 < yMin
-                              ? "#b91c1c"
-                              : "#0f766e"
+                              ? "#C2410C"
+                              : "#A3222A"
                           }
                           vectorEffect="non-scaling-stroke"
                         >

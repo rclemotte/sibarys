@@ -160,7 +160,7 @@ export default function ControlPreciosPanel() {
               <table className="w-full min-w-[760px] text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500">
                   <tr>
-                    {["Fecha", "Vehículo · Chofer", "Estación · Emblema", "Combustible", "Litros", "Pagó ₲/L", "Ref. ₲/L", "Dif.", "Dif. ₲"].map((h) => (
+                    {["Fecha", "Vehículo · Chofer", "Estación · Emblema", "Combustible", "Litros", "Pagó Gs./L", "Ref. Gs./L", "Dif.", "Dif. Gs."].map((h) => (
                       <th key={h} className="px-3 py-2 font-semibold">
                         {h}
                       </th>

@@ -14,33 +14,31 @@ import {
   fmtNumber,
   fmtMoney,
   fmtDate,
+  fmtFechaLarga,
+  saludoSegunHora,
   hoyLocal,
   inicioDelDiaLocal,
   inicioDelMesLocal,
 } from "@/lib/format";
-import { semaforo, sumarDias } from "@/lib/reportes";
+import { semaforo, sumarDias, type PuntoTiempo } from "@/lib/reportes";
+import {
+  BarChart3,
+  CarFront,
+  ClipboardList,
+  Fuel,
+  Gauge,
+  TrendingUp,
+  Wrench,
+} from "lucide-react";
+import Encabezado from "@/components/ui/Encabezado";
+import Kpi from "@/components/ui/Kpi";
+import AccesoRapido from "@/components/ui/AccesoRapido";
+import Aviso from "@/components/ui/Aviso";
+import Vacio from "@/components/ui/Vacio";
+import Etiqueta from "@/components/ui/Etiqueta";
+import { TiempoChart } from "../reportes/Charts";
 
 export const dynamic = "force-dynamic";
-
-function Kpi({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="card">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </p>
-      <p className="mt-1 text-2xl font-bold text-slate-900">{value}</p>
-      {hint ? <p className="text-xs text-slate-400">{hint}</p> : null}
-    </div>
-  );
-}
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -170,166 +168,239 @@ export default async function DashboardPage() {
 
   const recientes = cargas.slice(0, 5);
 
+  // ---- Comparación con los mismos días del mes anterior --------------------
+  const hoy = hoyLocal();
+  const [yy, mm, dd] = hoy.split("-").map(Number);
+  const pm = mm === 1 ? 12 : mm - 1;
+  const py = mm === 1 ? yy - 1 : yy;
+  const ultimoDiaPrev = new Date(Date.UTC(py, pm, 0)).getUTCDate();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const prevDesde = inicioDelDiaLocal(`${py}-${pad(pm)}-01`);
+  const prevHasta = new Date(
+    inicioDelDiaLocal(`${py}-${pad(pm)}-${pad(Math.min(dd, ultimoDiaPrev))}`).getTime() + 86400000,
+  );
+  const { data: prevRows } = await supabase
+    .from("consumo")
+    .select("litros, costo_total, distancia_km")
+    .gte("registrado_en", prevDesde.toISOString())
+    .lt("registrado_en", prevHasta.toISOString());
+  const prev = (prevRows || []) as { litros: number; costo_total: number | null; distancia_km: number | null }[];
+  const prevLitros = prev.reduce((s, r) => s + Number(r.litros), 0);
+  const prevGasto = prev.reduce((s, r) => s + Number(r.costo_total || 0), 0);
+  const prevTramo = prev.filter((r) => r.distancia_km != null && Number(r.distancia_km) > 0);
+  const prevKm = prevTramo.reduce((s, r) => s + Number(r.distancia_km), 0);
+  const prevL100 = prevKm > 0 ? (prevTramo.reduce((s, r) => s + Number(r.litros), 0) / prevKm) * 100 : null;
+  const variacion = (actual: number | null, antes: number | null, bueno: "sube" | "baja" | "neutro") =>
+    actual != null && antes != null && antes > 0 && prev.length > 0
+      ? { pct: ((actual - antes) / antes) * 100, bueno }
+      : null;
+
+  // ---- Litros por día del mes (gráfico) -----------------------------------
+  const porDia = new Map<string, PuntoTiempo>();
+  for (let d = 1; d <= dd; d++) {
+    const clave = `${yy}-${pad(mm)}-${pad(d)}`;
+    porDia.set(clave, { clave, label: String(d), gasto: 0, litros: 0, cargas: 0 });
+  }
+  for (const r of cargas) {
+    const p = porDia.get(hoyLocal(new Date(r.registrado_en)));
+    if (!p) continue;
+    p.litros += Number(r.litros) || 0;
+    p.gasto += Number(r.costo_total) || 0;
+    p.cargas += 1;
+  }
+  const serieDias = Array.from(porDia.values());
+
+  const esAdmin = esAdminRol(yo?.rol);
+  const nombre = ((yo as any)?.nombre_completo || "").trim().split(/\s+/)[0] || "";
+  const avisos = alertas.length + mantAviso.length + kmAviso.length;
+
   return (
-    <div className="space-y-4">
-      {alertas.length > 0 ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
-          <div className="flex items-start gap-2">
-            <span className="text-lg" aria-hidden="true">
-              ⚠️
-            </span>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-amber-800">
-                Consumo alto en los últimos 30 días
-              </p>
-              {alertas.map((a, i) => (
-                <p key={i} className="text-xs text-amber-700">
-                  <span className="font-semibold">{a.vehiculo}</span>:{" "}
-                  {fmtNumber(a.l100, 1)} L/100 km, referencia{" "}
-                  {fmtNumber(a.referencia, 1)} (+
-                  {fmtNumber((a.l100 / a.referencia - 1) * 100, 0)}%) en{" "}
-                  {fmtNumber(a.km, 0)} km.
-                </p>
-              ))}
-              <Link
-                href="/reportes"
-                className="inline-block pt-1 text-xs font-semibold text-amber-800 underline"
-              >
-                Ver detalle en Reportes
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : null}
+    <div className="space-y-5">
+      <Encabezado
+        titulo={`${saludoSegunHora()}${nombre ? `, ${nombre}` : ""}`}
+        subtitulo={`${fmtFechaLarga()} · ${fmtNumber(cargas.length)} ${cargas.length === 1 ? "carga" : "cargas"} este mes`}
+        extraAbajo
+      />
 
-      {kmAviso.length > 0 ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <div className="flex items-start gap-2">
-            <span className="text-lg" aria-hidden="true">
-              🚗
-            </span>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-red-800">
-                Alquilados cerca del límite de km
-              </p>
-              {kmAviso.map((v) => (
-                <p key={v.id} className="text-xs text-red-700">
-                  <span className="font-semibold">{v.nombre}</span>:{" "}
-                  {v.estado === "excedido"
-                    ? `se pasó ${fmtNumber(-(v.restantes ?? 0), 0)} km del límite de ${fmtNumber(v.limite, 0)}`
-                    : `faltan ${fmtNumber(v.restantes ?? 0, 0)} km para el límite de ${fmtNumber(v.limite, 0)}`}
-                </p>
-              ))}
-              <Link
-                href="/reportes/km-alquilados"
-                className="inline-block pt-1 text-xs font-semibold text-red-800 underline"
-              >
-                Ver km de alquilados
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <div className="relative z-10 -mt-14 grid grid-cols-2 gap-3 lg:-mt-10 lg:grid-cols-4 lg:gap-4 lg:px-6">
+        <Kpi
+          etiqueta="Consumo promedio"
+          valor={promL100 != null ? fmtNumber(promL100, 1) : "—"}
+          unidad="L/100 km"
+          punto="bg-brand"
+          variacion={variacion(promL100, prevL100, "baja")}
+        />
+        <Kpi
+          etiqueta="Cargas"
+          valor={fmtNumber(cargas.length)}
+          punto="bg-oro"
+          variacion={variacion(cargas.length, prev.length, "neutro")}
+        />
+        <Kpi
+          etiqueta="Litros"
+          valor={fmtNumber(litrosMes, 0)}
+          unidad="L"
+          punto="bg-ok"
+          variacion={variacion(litrosMes, prevLitros, "neutro")}
+        />
+        <Kpi
+          etiqueta="Gasto"
+          valor={fmtMoney(costoMes).replace("Gs. ", "")}
+          unidad="Gs."
+          punto="bg-tinta"
+          variacion={variacion(costoMes, prevGasto, "neutro")}
+        />
+      </div>
 
-      {mantAviso.length > 0 ? (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
-          <div className="flex items-start gap-2">
-            <span className="text-lg" aria-hidden="true">
-              🔧
-            </span>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-sky-900">
-                Mantenimiento próximo o vencido
-              </p>
-              {mantAviso.slice(0, 5).map((f) => (
-                <p key={f.vehiculo_id} className="text-xs text-sky-800">
-                  <span className="font-semibold">{f.nombre}</span>:{" "}
-                  {f.faltan != null && f.faltan <= 0
-                    ? `vencido, se pasó ${fmtNumber(-f.faltan, 0)} km`
-                    : `faltan ${fmtNumber(f.faltan ?? 0, 0)} km`}
-                </p>
-              ))}
-              {mantAviso.length > 5 ? (
-                <p className="text-xs text-sky-800">
-                  y {mantAviso.length - 5} más.
-                </p>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <AccesoRapido
+          href="/cargar"
+          destacado
+          icono={<Fuel size={24} strokeWidth={2.4} />}
+          titulo="Cargar combustible"
+          texto="Registrá una carga nueva"
+        />
+        <AccesoRapido
+          href="/historial"
+          icono={<ClipboardList size={24} strokeWidth={2.4} />}
+          titulo={esAdmin ? "Historial" : "Mi historial"}
+          texto="Cargas y consumo"
+        />
+        <div className="hidden lg:contents">
+          <AccesoRapido
+            href="/reportes"
+            icono={<BarChart3 size={24} strokeWidth={2.4} />}
+            titulo="Reportes"
+            texto="Gráficos y Excel"
+          />
+          {esAdmin ? (
+            <AccesoRapido
+              href="/admin/vehiculos"
+              icono={<CarFront size={24} strokeWidth={2.4} />}
+              titulo="Vehículos"
+              texto="Flota y alquilados"
+            />
+          ) : null}
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-5">
+          {avisos > 0 ? (
+            <section className="space-y-3">
+              <h2 className="px-1 font-display text-lg font-extrabold">Avisos</h2>
+              {alertas.length > 0 ? (
+                <Aviso
+                  tono="alerta"
+                  icono={<TrendingUp size={20} strokeWidth={2.6} className="text-alerta" />}
+                  titulo={`${alertas.length} ${alertas.length === 1 ? "vehículo" : "vehículos"} con consumo alto`}
+                  href="/reportes"
+                >
+                  {alertas
+                    .slice(0, 3)
+                    .map(
+                      (a) =>
+                        `${a.vehiculo}: ${fmtNumber(a.l100, 1)} L/100 km (+${fmtNumber((a.l100 / a.referencia - 1) * 100, 0)}%)`,
+                    )
+                    .join(" · ")}
+                </Aviso>
               ) : null}
-              <Link
-                href="/admin/mantenimiento"
-                className="inline-block pt-1 text-xs font-semibold text-sky-900 underline"
-              >
-                Ver mantenimiento
-              </Link>
+              {kmAviso.length > 0 ? (
+                <Aviso
+                  tono="error"
+                  icono={<Gauge size={20} strokeWidth={2.6} className="text-error" />}
+                  titulo={`${kmAviso.length} ${kmAviso.length === 1 ? "alquilado" : "alquilados"} cerca del límite de km`}
+                  href="/reportes/km-alquilados"
+                >
+                  {kmAviso
+                    .slice(0, 3)
+                    .map((v) =>
+                      v.estado === "excedido"
+                        ? `${v.nombre}: se pasó ${fmtNumber(-(v.restantes ?? 0))} km`
+                        : `${v.nombre}: faltan ${fmtNumber(v.restantes ?? 0)} km`,
+                    )
+                    .join(" · ")}
+                </Aviso>
+              ) : null}
+              {mantAviso.length > 0 ? (
+                <Aviso
+                  tono="neutro"
+                  icono={<Wrench size={20} strokeWidth={2.6} className="text-suave" />}
+                  titulo={
+                    mantAviso.length === 1
+                      ? "1 mantenimiento próximo o vencido"
+                      : `${mantAviso.length} mantenimientos próximos o vencidos`
+                  }
+                  href="/admin/mantenimiento"
+                >
+                  {mantAviso
+                    .slice(0, 3)
+                    .map((f) =>
+                      f.faltan != null && f.faltan <= 0
+                        ? `${f.nombre}: vencido`
+                        : `${f.nombre}: faltan ${fmtNumber(f.faltan ?? 0)} km`,
+                    )
+                    .join(" · ")}
+                </Aviso>
+              ) : null}
+            </section>
+          ) : null}
+
+          <section className="card">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-lg font-extrabold">Litros por día</h2>
+              <span className="subtitulo">Este mes</span>
             </div>
-          </div>
-        </div>
-      ) : null}
-
-      <div>
-        <h1 className="text-xl font-bold">Resumen del mes</h1>
-        <p className="text-sm text-slate-500">
-          {inicioMes.toLocaleDateString("es-AR", {
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Kpi
-          label="Consumo prom."
-          value={promL100 != null ? `${fmtNumber(promL100, 1)} L/100 km` : "—"}
-          hint="Litros ÷ km del mes"
-        />
-        <Kpi label="Cargas" value={fmtNumber(cargas.length)} hint="En el mes" />
-        <Kpi
-          label="Litros"
-          value={`${fmtNumber(litrosMes, 0)} L`}
-          hint="Total del mes"
-        />
-        <Kpi label="Gasto" value={fmtMoney(costoMes)} hint="Total del mes" />
-      </div>
-
-      <Link href="/cargar" className="btn-primary w-full">
-        ⛽ Registrar nueva carga
-      </Link>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-600">
-            Últimas cargas
-          </h2>
-          <Link href="/historial" className="text-sm text-brand">
-            Ver todo
-          </Link>
+            <TiempoChart data={serieDias} metrica="litros" />
+          </section>
         </div>
 
-        {recientes.length === 0 ? (
-          <div className="card text-center text-sm text-slate-400">
-            Todavía no hay cargas este mes.
+        <section>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h2 className="font-display text-lg font-extrabold">Últimas cargas</h2>
+            <Link href="/historial" className="btn-chico text-brand hover:bg-brand-suave">
+              Ver todo
+            </Link>
           </div>
-        ) : (
-          <ul className="space-y-2">
-            {recientes.map((r) => (
-              <li key={r.id} className="card flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{r.vehiculo_nombre}</p>
-                  <p className="text-xs text-slate-400">
-                    {fmtDate(r.registrado_en)} · {fmtNumber(r.odometro_km)} km
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">{fmtNumber(r.litros, 1)} L</p>
-                  <p className="text-xs text-slate-400">
-                    {r.litros_por_100km != null
-                      ? `${fmtNumber(r.litros_por_100km, 1)} L/100 km`
-                      : "1ª carga"}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+          {recientes.length === 0 ? (
+            <Vacio
+              icono={<Fuel size={26} strokeWidth={2.4} />}
+              titulo="Todavía no hay cargas este mes"
+              texto="Cuando registres una carga, aparece acá."
+              accion={
+                <Link href="/cargar" className="btn-primary">
+                  Cargar combustible
+                </Link>
+              }
+            />
+          ) : (
+            <ul className="card divide-y divide-linea p-0">
+              {recientes.map((r) => (
+                <li key={r.id} className="flex items-center gap-3 px-4 py-3.5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-suave text-brand">
+                    <Fuel size={20} strokeWidth={2.4} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-extrabold">{r.vehiculo_nombre}</p>
+                    <p className="truncate text-xs font-semibold text-suave">
+                      {fmtDate(r.registrado_en)} · {fmtNumber(r.odometro_km)} km
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display text-lg font-extrabold leading-tight">
+                      {fmtNumber(Number(r.litros), 2)} L
+                    </p>
+                    {r.litros_por_100km != null ? (
+                      <span className="text-xs font-bold text-suave">{fmtNumber(r.litros_por_100km, 1)} L/100</span>
+                    ) : (
+                      <Etiqueta tono="neutro">1ª carga</Etiqueta>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );

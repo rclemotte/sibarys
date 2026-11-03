@@ -73,7 +73,7 @@ export default function ReporteCargas({
                 "Recorrido",
                 "Litros",
                 "Precio/L",
-                "Total ₲",
+                "Total Gs.",
                 "L/100 km",
                 "Estación",
                 "Emblema",

@@ -4,8 +4,8 @@
   "description": "Registro de kilometraje y combustible de la flota Sibarys",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0f766e",
-  "theme_color": "#0f766e",
+  "background_color": "#FAF7F2",
+  "theme_color": "#7A1A22",
   "orientation": "portrait",
   "icons": [
     {

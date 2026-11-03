@@ -94,7 +94,7 @@ export async function crearCarga(
     return { error: "Ingresá un kilometraje válido." };
   if (!litros || litros <= 0) return { error: "Ingresá los litros cargados." };
   if (!total || total <= 0)
-    return { error: "Ingresá el total cargado (₲)." };
+    return { error: "Ingresá el total cargado (Gs.)." };
   if (estacionOtra) {
     if (!emblema_id) return { error: "Elegí el emblema de la estación." };
     if (estacionNombre.length < 2)

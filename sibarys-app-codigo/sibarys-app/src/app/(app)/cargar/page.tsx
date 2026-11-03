@@ -6,6 +6,10 @@ import type {
   EstacionParaCarga,
 } from "@/lib/types";
 import FuelForm from "./FuelForm";
+import Link from "next/link";
+import { Truck } from "lucide-react";
+import Encabezado from "@/components/ui/Encabezado";
+import Vacio from "@/components/ui/Vacio";
 
 export const dynamic = "force-dynamic";
 
@@ -125,20 +129,26 @@ export default async function CargarPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Nueva carga</h1>
-        <p className="text-sm text-slate-500">
-          Registrá el kilometraje y los litros cargados.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <Encabezado titulo="Cargar combustible" subtitulo="Kilometraje, litros y total de esta carga." />
 
       {vehiculos.length === 0 ? (
-        <div className="card text-center text-sm text-slate-500">
-          {esAdmin
-            ? "No hay vehículos cargados. Agregá la flota en Admin → Vehículos."
-            : "Todavía no hay vehículos cargados. Avisale al administrador."}
-        </div>
+        <Vacio
+          icono={<Truck size={26} strokeWidth={2.4} />}
+          titulo="Todavía no hay vehículos"
+          texto={
+            esAdmin
+              ? "Agregá la flota en Administración → Vehículos."
+              : "Avisale al administrador para que cargue los vehículos."
+          }
+          accion={
+            esAdmin ? (
+              <Link href="/admin/vehiculos" className="btn-primary">
+                Ir a Vehículos
+              </Link>
+            ) : null
+          }
+        />
       ) : (
         <FuelForm
           vehiculos={vehiculos}

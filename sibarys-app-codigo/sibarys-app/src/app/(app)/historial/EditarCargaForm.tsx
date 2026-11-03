@@ -172,7 +172,7 @@ export default function EditarCargaForm({
       </div>
 
       <div>
-        <label className="label">Total cargado (₲)</label>
+        <label className="label">Total cargado (Gs.)</label>
         <input
           name="total"
           type="number"
@@ -187,7 +187,7 @@ export default function EditarCargaForm({
         <p className="mt-1 text-[11px] text-slate-400">
           Precio por litro:{" "}
           {precioLitro != null
-            ? `₲ ${precioLitro.toLocaleString("es-AR")}`
+            ? `Gs. ${precioLitro.toLocaleString("es-AR")}`
             : "—"}
         </p>
       </div>

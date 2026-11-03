@@ -7,6 +7,20 @@ import { crearCarga, type CargarState } from "./actions";
 import type { VehiculoParaCarga, EstacionParaCarga } from "@/lib/types";
 import Combobox from "@/components/Combobox";
 import ComprobanteCompartir from "./ComprobanteCompartir";
+import Seccion from "@/components/ui/Seccion";
+import Link from "next/link";
+import {
+  AlertCircle,
+  CalendarClock,
+  CheckCircle2,
+  ClipboardPen,
+  Fuel,
+  Gauge,
+  House,
+  MapPin,
+  Plus,
+  Truck,
+} from "lucide-react";
 
 /** Opción especial del buscador: la estación no está en la lista. */
 const OTRA = "__otra__";
@@ -20,9 +34,12 @@ function fmtMiles(raw: string): string {
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn-primary w-full" disabled={pending}>
-      {pending ? "Guardando…" : "Guardar carga"}
-    </button>
+    <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+104px)] z-20 lg:static lg:inset-auto">
+      <button type="submit" className="btn-primary w-full text-lg shadow-flotante lg:shadow-boton" disabled={pending}>
+        <CheckCircle2 size={22} strokeWidth={2.6} />
+        {pending ? "Guardando…" : "Guardar carga"}
+      </button>
+    </div>
   );
 }
 
@@ -58,6 +75,9 @@ export default function FuelForm({
   const [olvidada, setOlvidada] = useState(false);
   const [choferId, setChoferId] = useState("");
   const [fecha, setFecha] = useState("");
+  const [tanqueLleno, setTanqueLleno] = useState(false);
+  // Pantalla de éxito después de guardar (con el comprobante)
+  const [exito, setExito] = useState(false);
 
   const vehiculo = useMemo(
     () => vehiculos.find((v) => v.id === vehiculoId),
@@ -98,6 +118,8 @@ export default function FuelForm({
 
   useEffect(() => {
     if (state.success) {
+      setExito(true);
+      setTanqueLleno(false);
       formRef.current?.reset();
       setVehiculoId("");
       setTipoId("");
@@ -107,12 +129,38 @@ export default function FuelForm({
       setEstacionId("");
       setChoferId("");
       setFecha("");
-      if (typeof window !== "undefined")
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      if (typeof window !== "undefined") window.scrollTo({ top: 0 });
     }
   }, [state.success]);
 
   const hoy = fechaHoraLocalInput();
+
+  const opcionesVehiculos = useMemo(
+    () => vehiculos.map((v) => ({ id: v.id, nombre: `${v.nombre} · ${v.patente}` })),
+    [vehiculos]
+  );
+
+  if (exito && state.success)
+    return (
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+        <div className="card flex flex-col items-center gap-2 py-8 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-ok-suave text-ok">
+            <CheckCircle2 size={34} strokeWidth={2.4} />
+          </span>
+          <p className="font-display text-2xl font-extrabold">¡Listo, carga guardada!</p>
+          <p className="max-w-xs text-sm font-semibold text-suave">{state.success}</p>
+          <div className="mt-4 grid w-full gap-3">
+            <button type="button" className="btn-primary w-full" onClick={() => setExito(false)}>
+              <Plus size={20} strokeWidth={2.6} /> Registrar otra carga
+            </button>
+            <Link href="/dashboard" className="btn-ghost w-full">
+              <House size={20} strokeWidth={2.4} /> Ir al inicio
+            </Link>
+          </div>
+        </div>
+        {state.comprobante ? <ComprobanteCompartir comprobante={state.comprobante} /> : null}
+      </div>
+    );
 
   return (
     <form
@@ -130,53 +178,36 @@ export default function FuelForm({
         }
         enviando.current = true;
       }}
-      className="space-y-4"
+      className="space-y-4 pb-20 lg:pb-0"
     >
-      {state.success ? (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-          <span className="text-xl" aria-hidden="true">
-            ✅
-          </span>
-          <span className="font-semibold">{state.success}</span>
-        </div>
-      ) : null}
-      {state.success && state.comprobante ? (
-        <ComprobanteCompartir comprobante={state.comprobante} />
-      ) : null}
       {state.error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div role="alert" className="flex items-start gap-3 rounded-tarjeta bg-error-suave p-4 text-sm font-bold text-error">
+          <AlertCircle size={20} strokeWidth={2.6} className="mt-0.5 shrink-0" />
           {state.error}
         </div>
       ) : null}
+
       {choferes ? (
-        <div
-          className={`card space-y-3 ${
-            olvidada ? "border-amber-300 bg-amber-50/60" : ""
-          }`}
-        >
-          <label className="flex items-center gap-3">
+        <section className={`card ${olvidada ? "ring-2 ring-alerta/40" : ""}`}>
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-3">
             <input
               type="checkbox"
               className="h-5 w-5 accent-brand"
               checked={olvidada}
               onChange={(e) => setOlvidada(e.target.checked)}
             />
-            <span className="text-sm font-medium text-slate-700">
-              Registrar una carga que un chofer se olvidó de cargar
+            <span className="flex items-center gap-2 font-extrabold">
+              <CalendarClock size={20} strokeWidth={2.4} className="text-alerta" />
+              Registrar una carga que un chofer se olvidó
             </span>
           </label>
           {olvidada ? (
-            <>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <input type="hidden" name="modo" value="olvidada" />
               <input type="hidden" name="chofer_id" value={choferId} />
               <div>
                 <label className="label">Chofer que hizo la carga</label>
-                <Combobox
-                  options={choferes}
-                  value={choferId}
-                  onChange={setChoferId}
-                  placeholder="Buscar chofer…"
-                />
+                <Combobox options={choferes} value={choferId} onChange={setChoferId} placeholder="Buscar chofer…" />
               </div>
               <div>
                 <label className="label" htmlFor="registrado_en">
@@ -193,7 +224,7 @@ export default function FuelForm({
                   required
                 />
               </div>
-              <div>
+              <div className="lg:col-span-2">
                 <label className="label" htmlFor="motivo">
                   Motivo
                 </label>
@@ -206,247 +237,237 @@ export default function FuelForm({
                   minLength={3}
                   required
                 />
+                <p className="mt-1.5 text-xs font-semibold text-alerta">
+                  La carga queda a nombre del chofer y con la fecha que pongas. En el Historial se ve que la registró
+                  administración.
+                </p>
               </div>
-              <p className="text-[11px] text-amber-700">
-                La carga queda a nombre del chofer y con la fecha que pongas.
-                En el Historial se ve que la registró administración.
-              </p>
-            </>
+            </div>
           ) : null}
-        </div>
+        </section>
       ) : null}
 
-      <div className="card space-y-4">
-        <div>
-          <label className="label" htmlFor="vehiculo_id">
-            Vehículo
-          </label>
-          <select
-            id="vehiculo_id"
-            name="vehiculo_id"
-            className="field"
-            value={vehiculoId}
-            onChange={(e) => setVehiculoId(e.target.value)}
-            required
-          >
-            <option value="" disabled>
-              Elegí un vehículo…
-            </option>
-            {vehiculos.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.nombre} — {v.patente}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="label" htmlFor="tipo_combustible_id">
-            Combustible
-          </label>
-          <select
-            id="tipo_combustible_id"
-            name="tipo_combustible_id"
-            className="field"
-            value={tipoId}
-            onChange={(e) => setTipoId(e.target.value)}
-            disabled={!vehiculo}
-            required
-          >
-            <option value="" disabled>
-              {vehiculo ? "Elegí el combustible…" : "Elegí primero el vehículo"}
-            </option>
-            {combustibles.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-          {vehiculo && combustibles.length === 0 ? (
-            <p className="mt-1 text-xs text-amber-600">
-              Este vehículo no tiene combustibles configurados. Avisá al
-              administrador.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label" htmlFor="odometro_view">
-              Kilometraje
-            </label>
-            <input type="hidden" name="odometro_km" value={odometro} />
-            <input
-              id="odometro_view"
-              type="text"
-              inputMode="numeric"
-              className="field"
-              placeholder="Ej. 154.320"
-              value={fmtMiles(odometro)}
-              onChange={(e) => setOdometro(e.target.value.replace(/\D/g, ""))}
-              required
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-4">
+          <Seccion titulo="Vehículo" icono={<Truck size={18} strokeWidth={2.6} />}>
+            <input type="hidden" name="vehiculo_id" value={vehiculoId} />
+            <Combobox
+              options={opcionesVehiculos}
+              value={vehiculoId}
+              onChange={setVehiculoId}
+              placeholder="Buscar por nombre o patente…"
+              allLabel="Elegí un vehículo…"
             />
-          </div>
-          <div>
-            <label className="label" htmlFor="litros">
-              Litros
-            </label>
-            <input
-              id="litros"
-              name="litros"
-              type="number"
-              inputMode="decimal"
-              step="0.01"
-              min="0"
-              className="field"
-              placeholder="Ej. 45.5"
-              value={litros}
-              onChange={(e) => setLitros(e.target.value)}
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label" htmlFor="total_view">
-              Total cargado en Guaraníes (₲)
-            </label>
-            <input type="hidden" name="total" value={total} />
-            <input
-              id="total_view"
-              type="text"
-              inputMode="numeric"
-              className="field"
-              placeholder="Ej. 450.000"
-              value={fmtMiles(total)}
-              onChange={(e) => setTotal(e.target.value.replace(/\D/g, ""))}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Precio/litro</label>
-            <input
-              type="text"
-              className="field bg-slate-50 text-slate-600"
-              value={
-                precioLitro != null
-                  ? precioLitro.toLocaleString("es-AR", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  : ""
-              }
-              placeholder="Automático"
-              readOnly
-              tabIndex={-1}
-            />
-            <p className="mt-1 text-[11px] text-slate-400">
-              Se calcula: Total ÷ Litros
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <label className="label">Estación</label>
-          <input type="hidden" name="estacion_id" value={esOtra ? "" : estacionId} />
-          {esOtra ? <input type="hidden" name="estacion_otra" value="1" /> : null}
-          <Combobox
-            options={opcionesEstaciones}
-            value={estacionId}
-            onChange={(id) => {
-              setEstacionId(id);
-              if (id) setFaltaEstacion(false);
-            }}
-            placeholder="Buscar estación…"
-            allLabel="Elegí la estación…"
-          />
-          {faltaEstacion ? (
-            <p className="mt-1 text-xs font-medium text-red-600">
-              Elegí la estación. Si no está en la lista, elegí «Otra estación».
-            </p>
-          ) : null}
-        </div>
-
-        {esOtra ? (
-          <div className="grid grid-cols-2 gap-3 rounded-xl bg-amber-50 p-3">
-            <div>
-              <label className="label" htmlFor="emblema_id">
-                Emblema
-              </label>
-              <select id="emblema_id" name="emblema_id" className="field" defaultValue="" required>
-                <option value="" disabled>
-                  Elegí…
-                </option>
-                {emblemas.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.nombre}
-                  </option>
-                ))}
-              </select>
+            <div className="mt-4">
+              <p className="label">Combustible</p>
+              <input type="hidden" name="tipo_combustible_id" value={tipoId} />
+              {!vehiculo ? (
+                <p className="rounded-boton bg-fondo px-4 py-3 text-sm font-bold text-tenue">Elegí primero el vehículo</p>
+              ) : combustibles.length === 0 ? (
+                <p className="rounded-boton bg-alerta-suave px-4 py-3 text-sm font-bold text-alerta">
+                  Este vehículo no tiene combustibles configurados. Avisá al administrador.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Combustible">
+                  {combustibles.map((c) => {
+                    const on = c.id === tipoId;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => setTipoId(c.id)}
+                        className={`flex min-h-[52px] items-center gap-2 rounded-boton border-2 px-4 text-left font-extrabold transition active:scale-[0.98] ${
+                          on ? "border-brand bg-brand-suave text-brand-dark" : "border-linea bg-white text-tinta"
+                        }`}
+                      >
+                        <Fuel size={18} strokeWidth={2.4} className={on ? "text-brand" : "text-tenue"} />
+                        {c.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <div>
-              <label className="label" htmlFor="estacion_nombre">
-                Nombre o zona
-              </label>
-              <input
-                id="estacion_nombre"
-                name="estacion_nombre"
-                type="text"
-                className="field"
-                placeholder="Ej. Ruta 2, Itauguá"
-                minLength={2}
-                required
-              />
+          </Seccion>
+
+          <Seccion titulo="Kilometraje y carga" icono={<Gauge size={18} strokeWidth={2.6} />}>
+            <div className="space-y-4">
+              <div>
+                <label className="label" htmlFor="odometro_view">
+                  Kilometraje (odómetro)
+                </label>
+                <input type="hidden" name="odometro_km" value={odometro} />
+                <div className="relative">
+                  <input
+                    id="odometro_view"
+                    type="text"
+                    inputMode="numeric"
+                    className="field pr-14 font-display text-xl font-bold"
+                    placeholder="154.320"
+                    value={fmtMiles(odometro)}
+                    onChange={(e) => setOdometro(e.target.value.replace(/\D/g, ""))}
+                    required
+                  />
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-extrabold text-tenue">km</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label" htmlFor="litros">
+                    Litros
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="litros"
+                      name="litros"
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      min="0"
+                      className="field pr-9 font-display text-xl font-bold"
+                      placeholder="45,5"
+                      value={litros}
+                      onChange={(e) => setLitros(e.target.value)}
+                      required
+                    />
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-extrabold text-tenue">L</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="label" htmlFor="total_view">
+                    Total (Gs.)
+                  </label>
+                  <input type="hidden" name="total" value={total} />
+                  <input
+                    id="total_view"
+                    type="text"
+                    inputMode="numeric"
+                    className="field font-display text-xl font-bold"
+                    placeholder="450.000"
+                    value={fmtMiles(total)}
+                    onChange={(e) => setTotal(e.target.value.replace(/\D/g, ""))}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-tarjeta bg-marca p-4 text-white">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-white/70">Precio por litro</p>
+                <p className="font-display text-3xl font-extrabold leading-tight">
+                  {precioLitro != null
+                    ? `Gs. ${precioLitro.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
+                    : "—"}
+                </p>
+                <p className="text-xs font-semibold text-white/70">
+                  {precioLitro != null
+                    ? `${Number(litros).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} L por Gs. ${fmtMiles(total)}`
+                    : "Se calcula solo: total ÷ litros"}
+                </p>
+              </div>
+
+              <div>
+                <p className="label">¿Llenaste el tanque?</p>
+                {tanqueLleno ? <input type="hidden" name="tanque_lleno" value="on" /> : null}
+                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tanque lleno">
+                  {[
+                    [true, "Sí, lleno"],
+                    [false, "No"],
+                  ].map(([v, t]) => {
+                    const on = tanqueLleno === v;
+                    return (
+                      <button
+                        key={String(v)}
+                        type="button"
+                        role="radio"
+                        aria-checked={on}
+                        onClick={() => setTanqueLleno(v as boolean)}
+                        className={`min-h-[52px] rounded-boton border-2 font-extrabold transition active:scale-[0.98] ${
+                          on ? "border-brand bg-brand-suave text-brand-dark" : "border-linea bg-white text-tinta"
+                        }`}
+                      >
+                        {t as string}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-xs font-semibold text-tenue">Con tanque lleno el consumo se calcula mejor.</p>
+              </div>
             </div>
-          </div>
-        ) : null}
-
-        {olvidada ? null : (
-        <div>
-          <label className="label" htmlFor="registrado_ahora">
-            Fecha y hora
-          </label>
-          <input
-            id="registrado_ahora"
-            type="datetime-local"
-            className="field cursor-not-allowed bg-slate-100 text-slate-500"
-            value={hoy}
-            disabled
-            readOnly
-          />
-          <p className="mt-1 text-[11px] text-slate-400">
-            Se registra automáticamente con la fecha y hora del momento.
-          </p>
+          </Seccion>
         </div>
-        )}
 
-        <label className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
-          <input
-            type="checkbox"
-            name="tanque_lleno"
-            className="h-5 w-5 accent-brand"
-          />
-          <span className="text-sm text-slate-600">
-            Tanque lleno (mejora el cálculo de consumo)
-          </span>
-        </label>
+        <div className="space-y-4">
+          <Seccion titulo="Estación" icono={<MapPin size={18} strokeWidth={2.6} />}>
+            <input type="hidden" name="estacion_id" value={esOtra ? "" : estacionId} />
+            {esOtra ? <input type="hidden" name="estacion_otra" value="1" /> : null}
+            <Combobox
+              options={opcionesEstaciones}
+              value={estacionId}
+              onChange={(id) => {
+                setEstacionId(id);
+                if (id) setFaltaEstacion(false);
+              }}
+              placeholder="Buscar estación…"
+              allLabel="Elegí la estación…"
+            />
+            {faltaEstacion ? (
+              <p className="mt-1.5 text-sm font-bold text-error">
+                Elegí la estación. Si no está en la lista, elegí «Otra estación».
+              </p>
+            ) : null}
+            {esOtra ? (
+              <div className="mt-4 grid gap-3 rounded-2xl bg-alerta-suave p-3 sm:grid-cols-2">
+                <div>
+                  <label className="label" htmlFor="emblema_id">
+                    Emblema
+                  </label>
+                  <select id="emblema_id" name="emblema_id" className="field" defaultValue="" required>
+                    <option value="" disabled>
+                      Elegí…
+                    </option>
+                    {emblemas.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label" htmlFor="estacion_nombre">
+                    Nombre o zona
+                  </label>
+                  <input
+                    id="estacion_nombre"
+                    name="estacion_nombre"
+                    type="text"
+                    className="field"
+                    placeholder="Ej. Ruta 2, Itauguá"
+                    minLength={2}
+                    required
+                  />
+                </div>
+              </div>
+            ) : null}
+          </Seccion>
 
-        <div>
-          <label className="label" htmlFor="notas">
-            Notas <span className="text-slate-300">(opc.)</span>
-          </label>
-          <textarea
-            id="notas"
-            name="notas"
-            rows={2}
-            className="field"
-            placeholder="Observaciones…"
-          />
+          <Seccion titulo="Detalles" icono={<ClipboardPen size={18} strokeWidth={2.6} />}>
+            {olvidada ? null : (
+              <p className="mb-4 flex items-center gap-2 rounded-boton bg-fondo px-4 py-3 text-sm font-bold text-suave">
+                <CalendarClock size={18} strokeWidth={2.4} className="text-tenue" />
+                Se registra con la fecha y hora de ahora
+              </p>
+            )}
+            <label className="label" htmlFor="notas">
+              Notas <span className="font-semibold text-tenue">(opcional)</span>
+            </label>
+            <textarea id="notas" name="notas" rows={2} className="field" placeholder="Observaciones…" />
+          </Seccion>
+
+          <Submit />
         </div>
       </div>
-
-      <Submit />
     </form>
   );
 }
