@@ -26,7 +26,7 @@ function Item({
       className={`flex items-center gap-3 rounded-2xl transition ${
         chico ? "px-3 py-2 text-sm" : "px-3 py-2.5 text-[15px]"
       } font-extrabold ${
-        activo ? "bg-marca text-white shadow-boton" : "text-white/70 hover:bg-white/5 hover:text-white"
+        activo ? "bg-marca text-tinta shadow-boton" : "text-white/70 hover:bg-white/5 hover:text-white"
       }`}
     >
       <Icono size={chico ? 18 : 20} strokeWidth={2.4} />

@@ -378,7 +378,7 @@ export default function ReportesPanel({
             onClick={exportar}
             aria-label="Descargar Excel"
             title="Descargar Excel"
-            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand shadow-flotante transition active:scale-95"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand-dark shadow-flotante transition active:scale-95"
           >
             <Download size={22} strokeWidth={2.4} />
           </button>
@@ -394,7 +394,7 @@ export default function ReportesPanel({
               type="button"
               onClick={() => (p.clave === "custom" ? setPeriodo("custom") : elegirPeriodo(p.clave))}
               className={`inline-flex min-h-[40px] shrink-0 items-center rounded-full px-4 text-sm font-extrabold transition active:scale-95 ${
-                periodo === p.clave ? "bg-white text-brand shadow-flotante" : "bg-white/15 text-white hover:bg-white/25"
+                periodo === p.clave ? "bg-marca text-tinta shadow-boton" : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               {p.label}

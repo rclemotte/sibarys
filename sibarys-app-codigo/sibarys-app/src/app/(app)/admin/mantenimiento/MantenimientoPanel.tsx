@@ -130,10 +130,7 @@ export default function MantenimientoPanel({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-tinta">
-          Mantenimiento
-        </h2>
-        <p className="text-sm text-suave">
+        <p className="px-1 text-sm font-semibold text-suave">
           El km actual sale de la última carga de combustible. Avisa cuando
           faltan {fmtNumber(AVISO_KM, 0)} km o menos.
         </p>

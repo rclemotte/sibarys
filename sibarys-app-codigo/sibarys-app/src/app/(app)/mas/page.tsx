@@ -27,7 +27,7 @@ export default async function MasPage() {
       <Encabezado titulo="Más" subtitulo="Tu cuenta y la administración" />
 
       <div className="card flex items-center gap-4">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-marca font-display text-xl font-extrabold text-white">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-marca font-display text-xl font-extrabold text-tinta">
           {iniciales(nombre)}
         </span>
         <div className="min-w-0">

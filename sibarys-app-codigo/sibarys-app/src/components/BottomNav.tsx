@@ -30,7 +30,7 @@ export default function BottomNav() {
                 <Link
                   href={href}
                   aria-label="Cargar combustible"
-                  className={`-mt-8 flex h-16 w-16 flex-col items-center justify-center rounded-[22px] bg-marca text-white shadow-boton ring-4 ring-fondo transition active:scale-95 ${
+                  className={`-mt-8 flex h-16 w-16 flex-col items-center justify-center rounded-[22px] bg-marca text-tinta shadow-boton ring-4 ring-fondo transition active:scale-95 ${
                     activo ? "brightness-110" : ""
                   }`}
                 >
@@ -45,7 +45,7 @@ export default function BottomNav() {
                 href={href}
                 aria-current={activo ? "page" : undefined}
                 className={`flex min-h-[48px] min-w-[56px] flex-col items-center justify-center gap-0.5 rounded-2xl px-2 py-1 text-[11px] font-extrabold transition active:scale-95 ${
-                  activo ? "bg-marca text-white shadow-boton" : "text-tenue hover:text-suave"
+                  activo ? "bg-marca text-tinta shadow-boton" : "text-tenue hover:text-suave"
                 }`}
               >
                 <Icono size={22} strokeWidth={2.4} />

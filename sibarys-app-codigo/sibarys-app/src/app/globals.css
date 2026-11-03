@@ -36,7 +36,7 @@ h1, h2, h3 {
 }
 
 .btn-primary {
-  @apply btn bg-marca text-white shadow-boton hover:brightness-110;
+  @apply btn bg-marca text-tinta shadow-boton hover:brightness-110;
 }
 
 .btn-ghost {
@@ -64,7 +64,7 @@ h1, h2, h3 {
 }
 
 .chip-on {
-  @apply chip bg-marca text-white shadow-boton hover:text-white;
+  @apply chip bg-marca text-tinta shadow-boton hover:text-white;
 }
 
 .etiqueta {

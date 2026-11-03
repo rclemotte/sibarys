@@ -10,7 +10,7 @@ function Confirmar({ anular }: { anular: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className={`btn flex-1 text-white ${anular ? "bg-error" : "bg-marca shadow-boton"}`}
+      className={`btn flex-1 ${anular ? "bg-error text-white" : "bg-marca text-tinta shadow-boton"}`}
     >
       {pending ? "Guardando…" : anular ? "Anular carga" : "Restaurar carga"}
     </button>

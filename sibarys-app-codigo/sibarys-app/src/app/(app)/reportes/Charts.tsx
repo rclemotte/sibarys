@@ -59,7 +59,7 @@ export function TiempoChart({
           tickFormatter={(v: number) => abreviar(v)}
         />
         <Tooltip
-          cursor={{ fill: "rgba(163,34,42,0.08)" }}
+          cursor={{ fill: "rgba(176,138,53,0.10)" }}
           formatter={(v: number, _n, item: any) => [
             fmt(v),
             `${metrica === "gasto" ? "Gasto" : "Litros"} · ${item.payload.cargas} carga(s)`,
@@ -73,7 +73,7 @@ export function TiempoChart({
         />
         <Bar
           dataKey={metrica}
-          fill="#A3222A"
+          fill="#C29A3E"
           radius={[8, 8, 8, 8]}
           maxBarSize={36}
         />
@@ -246,7 +246,7 @@ export function ConsumoChart({
           {unVehiculo ? (
             <Line
               dataKey="l100"
-              stroke="#A3222A"
+              stroke="#C29A3E"
               strokeWidth={2}
               dot={false}
               activeDot={false}
@@ -256,7 +256,7 @@ export function ConsumoChart({
           <Scatter
             data={puntos}
             dataKey="l100"
-            fill="#A3222A"
+            fill="#C29A3E"
             stroke="#ffffff"
             strokeWidth={2}
             isAnimationActive={false}
@@ -265,7 +265,7 @@ export function ConsumoChart({
       </ResponsiveContainer>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-suave">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#A3222A]" />{" "}
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#C29A3E]" />{" "}
           Carga
         </span>
         {ref != null ? (

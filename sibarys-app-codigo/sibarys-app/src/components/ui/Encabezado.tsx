@@ -55,7 +55,7 @@ export default function Encabezado({
 }) {
   return (
     <header
-      className={`relative -mx-4 -mt-4 overflow-hidden rounded-b-[32px] bg-marca px-5 pt-[calc(env(safe-area-inset-top)+20px)] text-white lg:mx-0 lg:mt-0 lg:rounded-[28px] lg:px-8 lg:pt-7 ${
+      className={`relative -mx-4 -mt-4 overflow-hidden rounded-b-[32px] bg-oscuro px-5 pt-[calc(env(safe-area-inset-top)+20px)] text-white lg:mx-0 lg:mt-0 lg:rounded-[28px] lg:px-8 lg:pt-7 ${
         extraAbajo ? "pb-14" : "pb-6"
       }`}
     >
@@ -97,7 +97,7 @@ export function AccionEncabezado({
       href={href}
       aria-label={etiqueta}
       title={etiqueta}
-      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand shadow-flotante transition active:scale-95"
+      className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand-dark shadow-flotante transition active:scale-95"
     >
       {icono}
     </Link>

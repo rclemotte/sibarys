@@ -326,11 +326,11 @@ export default async function HistorialPage({
               key={t as string}
               href={href as string}
               className={`inline-flex min-h-[40px] shrink-0 items-center rounded-full px-4 text-sm font-extrabold transition active:scale-95 ${
-                on ? "bg-white text-brand shadow-flotante" : "bg-white/15 text-white hover:bg-white/25"
+                on ? "bg-marca text-tinta shadow-boton" : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
               {t as string}
-              {on && !f.anuladas ? <span className="ml-1.5 rounded-full bg-brand-suave px-1.5 text-xs">{fmtNumber(total)}</span> : null}
+              {on && !f.anuladas ? <span className="ml-1.5 rounded-full bg-white/60 px-1.5 text-xs">{fmtNumber(total)}</span> : null}
             </Link>
           ))}
         </nav>

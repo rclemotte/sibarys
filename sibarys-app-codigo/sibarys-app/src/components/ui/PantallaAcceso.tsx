@@ -9,7 +9,7 @@ export default function PantallaAcceso({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen flex-col bg-marca lg:items-center lg:justify-center lg:py-10">
+    <main className="flex min-h-screen flex-col bg-oscuro lg:items-center lg:justify-center lg:py-10">
       <div className="relative overflow-hidden px-6 pb-14 pt-[calc(env(safe-area-inset-top)+44px)] text-white lg:w-[460px] lg:px-0 lg:pb-8 lg:pt-0 lg:text-center">
         <svg aria-hidden="true" className="pointer-events-none absolute -right-16 -top-10 h-64 w-64 lg:hidden" viewBox="0 0 200 200">
           <circle cx="120" cy="80" r="90" fill="white" opacity="0.07" />

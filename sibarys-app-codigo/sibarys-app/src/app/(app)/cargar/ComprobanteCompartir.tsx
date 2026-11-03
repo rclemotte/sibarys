@@ -7,8 +7,8 @@ import type { Comprobante } from "./actions";
 
 const ANCHO = 1080;
 const FUENTE = "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif";
-const TEAL = "#A3222A";
-const TEAL_OSCURO = "#7A1A22";
+const TEAL = "#2B2627";
+const TEAL_OSCURO = "#2B2627";
 const GRIS = "#64748b";
 const TEXTO = "#0f172a";
 
@@ -66,9 +66,10 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
   ctx.fillRect(0, 0, ANCHO, alto);
   ctx.fillStyle = TEAL;
   ctx.fillRect(0, 0, ANCHO, 230);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#E0AE4C";
   ctx.font = `700 40px ${FUENTE}`;
   ctx.fillText("SIBARYS", 64, 92);
+  ctx.fillStyle = "#ffffff";
   ctx.font = `700 60px ${FUENTE}`;
   ctx.fillText("Comprobante de carga", 64, 172);
   ctx.textAlign = "right";
@@ -107,7 +108,7 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
   y += 50;
   ctx.fillStyle = TEAL_OSCURO;
   caja(ctx, x, y, w, 130, 28);
-  ctx.fillStyle = "#F8E7E6";
+  ctx.fillStyle = "#E0AE4C";
   ctx.font = `600 36px ${FUENTE}`;
   ctx.fillText("Total pagado", x + 40, y + 80);
   ctx.fillStyle = "#ffffff";

@@ -353,8 +353,8 @@ export default function FuelForm({
                 </div>
               </div>
 
-              <div className="rounded-tarjeta bg-marca p-4 text-white">
-                <p className="text-xs font-extrabold uppercase tracking-wider text-white/70">Precio por litro</p>
+              <div className="rounded-tarjeta bg-oscuro p-4 text-white">
+                <p className="text-xs font-extrabold uppercase tracking-wider text-oro">Precio por litro</p>
                 <p className="font-display text-3xl font-extrabold leading-tight">
                   {precioLitro != null
                     ? `Gs. ${precioLitro.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`

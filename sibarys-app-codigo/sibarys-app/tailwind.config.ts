@@ -1,6 +1,6 @@
 import type { Config } from "tailwindcss";
 
-// Sistema de diseño Sibarys: rojo de marca, oscuro, dorado y fondo cálido.
+// Sistema de diseño Sibarys: dorado como principal, con negro, gris y blanco.
 const config: Config = {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
@@ -8,10 +8,10 @@ const config: Config = {
       colors: {
         // Principal (se mantiene el nombre "brand" para que lo existente lo herede)
         brand: {
-          DEFAULT: "#A3222A",
-          dark: "#7A1A22",
-          light: "#C8343D",
-          suave: "#F8E7E6",
+          DEFAULT: "#B08A35", // dorado Sibarys (texto, íconos, bordes)
+          dark: "#7E6223",
+          light: "#E0AE4C",
+          suave: "#F7EFD9",
         },
         tinta: "#2B2627", // texto principal y barra lateral
         suave: "#6E6462", // texto secundario
@@ -29,16 +29,17 @@ const config: Config = {
         sans: ["Nunito", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       backgroundImage: {
-        marca: "linear-gradient(135deg, #7A1A22 0%, #A3222A 55%, #C8343D 100%)",
+        marca: "linear-gradient(135deg, #C29A3E 0%, #E0AE4C 55%, #EFCB76 100%)",
+        oscuro: "linear-gradient(135deg, #1C1819 0%, #2B2627 55%, #463E3F 100%)",
       },
       borderRadius: {
         tarjeta: "24px",
         boton: "16px",
       },
       boxShadow: {
-        suave: "0 10px 30px -12px rgba(122, 26, 34, 0.18), 0 2px 6px -2px rgba(43, 38, 39, 0.06)",
+        suave: "0 10px 30px -12px rgba(43, 38, 39, 0.20), 0 2px 6px -2px rgba(43, 38, 39, 0.06)",
         flotante: "0 18px 40px -14px rgba(43, 38, 39, 0.35)",
-        boton: "0 10px 22px -10px rgba(163, 34, 42, 0.65)",
+        boton: "0 10px 22px -10px rgba(176, 138, 53, 0.70)",
       },
       maxWidth: { app: "1150px" },
     },

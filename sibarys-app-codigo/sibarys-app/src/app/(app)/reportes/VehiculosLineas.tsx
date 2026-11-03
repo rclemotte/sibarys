@@ -166,7 +166,7 @@ export default function VehiculosLineas({
                         <path
                           d={camino}
                           fill="none"
-                          stroke="#A3222A"
+                          stroke="#C29A3E"
                           strokeWidth={2}
                           strokeLinejoin="round"
                           vectorEffect="non-scaling-stroke"
@@ -181,7 +181,7 @@ export default function VehiculosLineas({
                           fill={
                             p.l100 > yMax || p.l100 < yMin
                               ? "#C2410C"
-                              : "#A3222A"
+                              : "#C29A3E"
                           }
                           vectorEffect="non-scaling-stroke"
                         >
