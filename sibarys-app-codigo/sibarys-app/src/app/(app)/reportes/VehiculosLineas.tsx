@@ -11,17 +11,17 @@ const ESTADO: Record<
   Semaforo,
   { label: string; icono: string; clase: string }
 > = {
-  alto: { label: "Alto", icono: "▲", clase: "bg-red-50 text-red-800" },
+  alto: { label: "Alto", icono: "▲", clase: "bg-error-suave text-error" },
   atencion: {
     label: "Atención",
     icono: "!",
-    clase: "bg-amber-50 text-amber-800",
+    clase: "bg-alerta-suave text-alerta",
   },
-  ok: { label: "Normal", icono: "✓", clase: "bg-emerald-50 text-emerald-800" },
+  ok: { label: "Normal", icono: "✓", clase: "bg-ok-suave text-ok" },
   sin_datos: {
     label: "Pocos datos",
     icono: "…",
-    clase: "bg-slate-100 text-slate-500",
+    clase: "bg-neutro-suave text-suave",
   },
 };
 const ORDEN_ESTADO: Record<Semaforo, number> = {
@@ -101,7 +101,7 @@ export default function VehiculosLineas({
   return (
     <div>
       {/* Encabezado con fechas, alineado con la columna de las líneas */}
-      <div className="mb-1 flex items-center gap-3 text-[10px] text-slate-400">
+      <div className="mb-1 flex items-center gap-3 text-[10px] text-tenue">
         <div className="w-24 shrink-0 sm:w-32">Vehículo</div>
         <div className="flex flex-1 justify-between">
           <span>{fmtDia(desdeMs)}</span>
@@ -111,7 +111,7 @@ export default function VehiculosLineas({
         <div className="w-[5.5rem] shrink-0 text-right">Prom. / ref.</div>
       </div>
 
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-linea">
         {filas.map((v) => {
           const pts = (porVeh.get(v.clave) || []).sort((a, b) => a.t - b.t);
           const est = ESTADO[v.semaforo ?? "sin_datos"];
@@ -126,20 +126,20 @@ export default function VehiculosLineas({
               <button
                 type="button"
                 onClick={() => onElegir(v.clave)}
-                className="flex w-full items-center gap-3 py-2 text-left hover:bg-slate-50"
+                className="flex w-full items-center gap-3 py-2 text-left hover:bg-fondo"
               >
                 <div className="w-24 shrink-0 sm:w-32">
-                  <p className="truncate text-sm font-semibold text-slate-800">
+                  <p className="truncate text-sm font-semibold text-tinta">
                     {v.nombre}
                   </p>
-                  <p className="truncate text-[11px] text-slate-400">
+                  <p className="truncate text-[11px] text-tenue">
                     {v.detalle?.split(" · ")[0]}
                   </p>
                 </div>
 
                 <div className="min-w-0 flex-1">
                   {pts.length === 0 ? (
-                    <p className="text-[11px] text-slate-300">
+                    <p className="text-[11px] text-tenue">
                       Sin tramos en el periodo
                     </p>
                   ) : (
@@ -193,10 +193,10 @@ export default function VehiculosLineas({
                 </div>
 
                 <div className="w-[5.5rem] shrink-0 text-right">
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-tinta">
                     {v.l100 != null ? num(v.l100) : "—"}
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-tenue">
                     ref. {v.ref_l100 != null ? num(v.ref_l100) : "—"}
                   </p>
                   <span
@@ -213,7 +213,7 @@ export default function VehiculosLineas({
       </ul>
 
       {sinTramo.length > 0 ? (
-        <p className="mt-2 rounded-lg bg-slate-50 px-3 py-2 text-[11px] text-slate-500">
+        <p className="mt-2 rounded-lg bg-fondo px-3 py-2 text-[11px] text-suave">
           Con una sola carga en el periodo (todavía sin tramo para medir):{" "}
           {sinTramo
             .map((v) => v.nombre)
@@ -223,7 +223,7 @@ export default function VehiculosLineas({
         </p>
       ) : null}
 
-      <p className="mt-2 text-[11px] leading-snug text-slate-400">
+      <p className="mt-2 text-[11px] leading-snug text-tenue">
         Cada línea es el consumo (L/100 km) de cada carga del vehículo; la línea
         punteada es su referencia. Todas usan la misma escala ({yMin} a {yMax});
         un punto rojo es un valor que se sale de esa escala. El promedio y el

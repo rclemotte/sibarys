@@ -2,6 +2,7 @@ import { soloAdmin } from "@/lib/soloAdmin";
 import { referenciaL100 } from "@/lib/consumo";
 import type { VehiculoPlanilla } from "@/lib/planillaCombustible";
 import ReportesNav from "@/components/ReportesNav";
+import Encabezado from "@/components/ui/Encabezado";
 import PlanillaPanel from "./PlanillaPanel";
 
 export const dynamic = "force-dynamic";
@@ -26,18 +27,9 @@ export default async function PlanillaPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Reportes</h1>
+    <div className="space-y-5">
+      <Encabezado titulo="Planilla de combustible" subtitulo="El Excel de control con el formato de Dirección. Elegí las fechas y descargalo." />
       <ReportesNav />
-      <div>
-        <h2 className="text-base font-semibold text-slate-700">
-          Planilla de combustible
-        </h2>
-        <p className="text-sm text-slate-500">
-          El Excel de control con el formato de Dirección. Elegí las fechas y
-          descargalo.
-        </p>
-      </div>
       <PlanillaPanel vehiculos={vehiculos} />
     </div>
   );

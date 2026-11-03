@@ -31,7 +31,7 @@ export function TiempoChart({
 }) {
   if (data.every((p) => p[metrica] === 0))
     return (
-      <p className="py-10 text-center text-sm text-slate-400">
+      <p className="py-10 text-center text-sm text-tenue">
         Sin cargas en este periodo.
       </p>
     );
@@ -135,26 +135,26 @@ function TooltipConsumo({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const p: PuntoConsumo = payload[0].payload;
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-      <p className="font-semibold text-slate-900">
+    <div className="rounded-xl border border-linea bg-white px-3 py-2 text-xs shadow-md">
+      <p className="font-semibold text-tinta">
         {p.vehiculo}{" "}
-        <span className="font-normal text-slate-400">· {p.patente}</span>
+        <span className="font-normal text-tenue">· {p.patente}</span>
       </p>
-      <p className="text-slate-400">{p.modelo}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">
+      <p className="text-tenue">{p.modelo}</p>
+      <p className="mt-1 text-sm font-semibold text-tinta">
         {p.l100.toLocaleString("es-AR")} L/100 km
       </p>
       {p.ref != null ? (
-        <p className="text-slate-500">
+        <p className="text-suave">
           Referencia del vehículo: {p.ref.toLocaleString("es-AR")}
         </p>
       ) : null}
-      <p className="mt-1 text-slate-500">
+      <p className="mt-1 text-suave">
         {p.litros.toLocaleString("es-AR", { maximumFractionDigits: 2 })} L en{" "}
         {p.recorrido.toLocaleString("es-AR", { maximumFractionDigits: 0 })} km
       </p>
-      <p className="text-slate-500">{p.chofer}</p>
-      <p className="text-slate-400">{p.fecha}</p>
+      <p className="text-suave">{p.chofer}</p>
+      <p className="text-tenue">{p.fecha}</p>
     </div>
   );
 }
@@ -173,7 +173,7 @@ export function ConsumoChart({
 }) {
   if (puntos.length === 0)
     return (
-      <p className="py-10 text-center text-sm text-slate-400">
+      <p className="py-10 text-center text-sm text-tenue">
         Sin cargas con recorrido en este periodo.
       </p>
     );
@@ -263,14 +263,14 @@ export function ConsumoChart({
           />
         </ComposedChart>
       </ResponsiveContainer>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-suave">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#A3222A]" />{" "}
           Carga
         </span>
         {ref != null ? (
           <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block w-4 border-t-2 border-dashed border-slate-500" />{" "}
+            <span className="inline-block w-4 border-t-2 border-dashed border-suave" />{" "}
             Referencia
           </span>
         ) : null}

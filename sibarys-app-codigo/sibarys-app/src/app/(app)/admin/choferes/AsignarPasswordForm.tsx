@@ -31,7 +31,7 @@ export default function AsignarPasswordForm({ id }: { id: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+        className="rounded-lg border border-linea px-2.5 py-1.5 text-xs font-bold text-suave hover:bg-fondo"
       >
         Contraseña
       </button>
@@ -51,12 +51,12 @@ export default function AsignarPasswordForm({ id }: { id: string }) {
         autoFocus
       />
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-xs text-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-xs text-ok">
           {state.success}
         </p>
       ) : null}

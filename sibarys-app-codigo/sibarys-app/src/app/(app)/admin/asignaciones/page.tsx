@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { esAdminRol } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Vehiculo, Perfil, Asignacion } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import AsignacionForm from "./AsignacionForm";
 import { quitarAsignacion } from "./actions";
 
@@ -23,7 +23,7 @@ export default async function AsignacionesPage() {
 
   if (!esAdminRol(yo?.rol)) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         Esta sección es solo para administradores.
       </div>
     );
@@ -55,18 +55,17 @@ export default async function AsignacionesPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/asignaciones" />
 
       <AsignacionForm vehiculos={vehiculos} choferes={choferes} />
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
+        <h2 className="mb-2 px-1 font-display text-lg font-extrabold text-tinta">
           Asignaciones activas
         </h2>
         {asignaciones.length === 0 ? (
-          <div className="card text-center text-sm text-slate-400">
+          <div className="card text-center text-sm text-tenue">
             No hay asignaciones. Asigná un vehículo arriba.
           </div>
         ) : (
@@ -84,14 +83,14 @@ export default async function AsignacionesPage() {
                       return (
                         <li
                           key={a.id}
-                          className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+                          className="flex items-center justify-between rounded-lg bg-fondo px-3 py-2"
                         >
                           <span className="text-sm">
                             {v ? `${v.nombre} — ${v.patente}` : "Vehículo"}
                           </span>
                           <form action={quitarAsignacion}>
                             <input type="hidden" name="id" value={a.id} />
-                            <button className="text-xs font-medium text-red-600 hover:underline">
+                            <button className="text-xs font-bold text-error hover:underline">
                               Quitar
                             </button>
                           </form>

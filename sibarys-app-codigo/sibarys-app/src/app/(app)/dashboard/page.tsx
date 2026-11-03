@@ -284,7 +284,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-start">
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
         <div className="space-y-5">
           {avisos > 0 ? (
             <section className="space-y-3">

@@ -83,7 +83,7 @@ export default function VehicleForm({
         </div>
       </div>
       {marcas.length === 0 ? (
-        <p className="-mt-1 text-xs text-amber-600">
+        <p className="-mt-1 text-xs text-alerta">
           No hay marcas cargadas. Agregalas en la pestaña Marcas.
         </p>
       ) : null}
@@ -115,7 +115,7 @@ export default function VehicleForm({
         </div>
       </div>
 
-      <div className="rounded-xl bg-slate-50 px-4 py-3">
+      <div className="rounded-xl bg-fondo px-4 py-3">
         <label className="flex items-center gap-3">
           <input
             type="checkbox"
@@ -124,7 +124,7 @@ export default function VehicleForm({
             onChange={(e) => setAlquilado(e.target.checked)}
             className="h-5 w-5 accent-brand"
           />
-          <span className="text-sm text-slate-600">Vehículo alquilado</span>
+          <span className="text-sm text-suave">Vehículo alquilado</span>
         </label>
         {alquilado ? (
           <div className="mt-3">
@@ -138,7 +138,7 @@ export default function VehicleForm({
               ))}
             </select>
             {empresas.length === 0 ? (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 text-xs text-alerta">
                 No hay empresas cargadas. Agregalas en la pestaña Empresas.
               </p>
             ) : null}
@@ -150,7 +150,7 @@ export default function VehicleForm({
       <div>
         <label className="label">Combustibles que puede usar</label>
         {tipos.length === 0 ? (
-          <p className="text-xs text-amber-600">
+          <p className="text-xs text-alerta">
             Primero cargá tipos de combustible en la pestaña Tarifas.
           </p>
         ) : (
@@ -158,7 +158,7 @@ export default function VehicleForm({
             {tipos.map((t) => (
               <label
                 key={t.id}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="flex items-center gap-2 rounded-lg border border-linea px-3 py-2 text-sm"
               >
                 <input
                   type="checkbox"
@@ -174,7 +174,7 @@ export default function VehicleForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
           {state.error}
         </p>
       ) : null}

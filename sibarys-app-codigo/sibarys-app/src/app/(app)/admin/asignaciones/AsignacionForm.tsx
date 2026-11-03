@@ -33,7 +33,7 @@ export default function AsignacionForm({
 
   return (
     <form ref={ref} action={action} className="card space-y-3">
-      <h2 className="text-sm font-semibold text-slate-600">
+      <h2 className="text-sm font-semibold text-suave">
         Asignar vehículo a chofer
       </h2>
       <div>
@@ -64,12 +64,12 @@ export default function AsignacionForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-sm text-ok">
           {state.success}
         </p>
       ) : null}

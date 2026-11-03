@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fmtMoney, hoyLocal } from "@/lib/format";
 
 const fmtDate = (ymd: string) => ymd.split("-").reverse().join("/");
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import TarifaForms, { BorrarPrecio } from "./TarifaForms";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +28,9 @@ export default async function PreciosPage() {
 
   if (!tienePermiso(yo, "puede_editar_catalogos")) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-bold">Administración</h1>
-        <AdminNav />
-        <div className="card text-center text-sm text-slate-500">
+      <div className="space-y-5">
+        <EncabezadoAdmin seccion="/admin/tarifas" />
+        <div className="card text-center text-sm text-suave">
           No tenés permiso para esta sección. Pedíselo al súper admin.
         </div>
       </div>
@@ -54,19 +53,12 @@ export default async function PreciosPage() {
   const nombreTipo = new Map((ts || []).map((t: any) => [t.id as string, t.nombre as string]));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
-      <div>
-        <h2 className="text-base font-semibold text-slate-700">Precios de referencia</h2>
-        <p className="text-sm text-slate-500">
-          Precio por litro de cada emblema y combustible. Se usa solo para controlar lo que pagan
-          los choferes (Reportes → Control de precios); no cambia cómo cargan.
-        </p>
-      </div>
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/tarifas" />
+      <p className="px-1 text-sm font-semibold text-suave">Precio por litro de cada emblema y combustible. Se usa solo para controlar lo que pagan los choferes (Reportes → Control de precios); no cambia cómo cargan.</p>
 
       {error ? (
-        <div className="card text-center text-sm text-amber-700">
+        <div className="card text-center text-sm text-alerta">
           Falta correr el SQL migracion_precios_emblema.sql en Supabase.
         </div>
       ) : (
@@ -79,9 +71,9 @@ export default async function PreciosPage() {
               const tiposCon = Array.from(new Set(propios.map((p) => p.tipo_combustible_id)));
               return (
                 <li key={e.id} className="card">
-                  <p className="font-semibold">{e.nombre}</p>
+                  <p className="font-extrabold">{e.nombre}</p>
                   {tiposCon.length === 0 ? (
-                    <p className="text-xs text-slate-400">Sin precios cargados.</p>
+                    <p className="text-xs text-tenue">Sin precios cargados.</p>
                   ) : (
                     <ul className="mt-2 space-y-1">
                       {tiposCon
@@ -93,14 +85,14 @@ export default async function PreciosPage() {
                           const actual = hist.find((p) => p.vigente_desde <= hoy);
                           const futuro = hist.filter((p) => p.vigente_desde > hoy).at(-1);
                           return (
-                            <li key={tid} className="border-t border-slate-100 pt-1 text-sm">
+                            <li key={tid} className="border-t border-linea pt-1 text-sm">
                               <div className="flex items-center justify-between gap-2">
                                 <span>{nombreTipo.get(tid) ?? "—"}</span>
                                 <span className="font-semibold text-brand">
                                   {actual ? `${fmtMoney(actual.precio)}/L` : "—"}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-tenue">
                                 {actual ? `Desde ${fmtDate(actual.vigente_desde)}` : "Sin precio vigente"}
                                 {futuro
                                   ? ` · desde ${fmtDate(futuro.vigente_desde)}: ${fmtMoney(futuro.precio)}/L`
@@ -110,7 +102,7 @@ export default async function PreciosPage() {
                                 <summary className="cursor-pointer text-brand">
                                   Historial ({hist.length})
                                 </summary>
-                                <ul className="mt-1 space-y-0.5 text-slate-500">
+                                <ul className="mt-1 space-y-0.5 text-suave">
                                   {hist.map((h) => (
                                     <li key={h.id} className="flex justify-between">
                                       <span>{fmtDate(h.vigente_desde)}</span>

@@ -6,6 +6,12 @@ import Link from "next/link";
 import { inicioDelDiaLocal } from "@/lib/format";
 import EditarCargaForm, { type CargaEditable } from "./EditarCargaForm";
 import AnularCargaForm from "./AnularCargaForm";
+import { ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Fuel, SlidersHorizontal } from "lucide-react";
+import Encabezado, { AccionEncabezado } from "@/components/ui/Encabezado";
+import Etiqueta from "@/components/ui/Etiqueta";
+import Vacio from "@/components/ui/Vacio";
+import { colorVehiculo, sigla } from "@/lib/colorVehiculo";
+import { hoyLocal } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -269,51 +275,102 @@ export default async function HistorialPage({
     }));
   }
 
-  return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Historial</h1>
-        <p className="text-sm text-slate-500">
-          {f.anuladas
-            ? `${fmtNumber(total)} carga(s) anulada(s).`
-            : hayFiltros
-              ? `${fmtNumber(total)} carga(s) con esos filtros.`
-              : `${fmtNumber(total)} cargas en total, de la más nueva a la más vieja.`}
-        </p>
-      </div>
+  // Atajos de fecha (chips)
+  const hoy = hoyLocal();
+  const [hy, hm] = hoy.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const mesActual = { desde: `${hy}-${pad(hm)}-01`, hasta: hoy };
+  const pmY = hm === 1 ? hy - 1 : hy;
+  const pmM = hm === 1 ? 12 : hm - 1;
+  const mesPasado = {
+    desde: `${pmY}-${pad(pmM)}-01`,
+    hasta: `${pmY}-${pad(pmM)}-${pad(new Date(Date.UTC(pmY, pmM, 0)).getUTCDate())}`,
+  };
+  const chipFecha = (r: { desde: string; hasta: string } | null) =>
+    !f.anuladas && (r ? f.desde === r.desde && f.hasta === r.hasta : !f.desde && !f.hasta);
 
-      <details className="card" open={hayFiltros}>
-        <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-          Buscar cargas {hayFiltros ? "· filtros activos" : ""}
+  // Agrupar por mes (hora de Paraguay)
+  const mesDe = (iso: string) => {
+    const t = new Date(iso).toLocaleDateString("es-AR", { timeZone: "America/Asuncion", month: "long", year: "numeric" });
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  };
+  const grupos: { mes: string; filas: Consumo[] }[] = [];
+  for (const r of cargas) {
+    const m = mesDe(r.registrado_en);
+    const g = grupos[grupos.length - 1];
+    if (g && g.mes === m) g.filas.push(r);
+    else grupos.push({ mes: m, filas: [r] });
+  }
+
+  return (
+    <div className="space-y-5">
+      <Encabezado
+        titulo="Historial"
+        subtitulo={
+          f.anuladas
+            ? `${fmtNumber(total)} ${total === 1 ? "carga anulada" : "cargas anuladas"}`
+            : hayFiltros
+              ? `${fmtNumber(total)} ${total === 1 ? "carga" : "cargas"} con esos filtros`
+              : `${fmtNumber(total)} cargas, de la más nueva a la más vieja`
+        }
+        accion={<AccionEncabezado href="/cargar" etiqueta="Nueva carga" icono={<Fuel size={22} strokeWidth={2.4} />} />}
+      >
+        <nav aria-label="Filtros rápidos" className="sin-barra -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">
+          {[
+            ["Todas", urlCon({ desde: "", hasta: "", anuladas: "", pagina: "1" }), chipFecha(null) && !f.vehiculo && !f.chofer],
+            ["Este mes", urlCon({ ...mesActual, anuladas: "", pagina: "1" }), chipFecha(mesActual)],
+            ["Mes pasado", urlCon({ ...mesPasado, anuladas: "", pagina: "1" }), chipFecha(mesPasado)],
+            ...(puedeCorregir ? [["Anuladas", urlCon({ anuladas: "1", pagina: "1" }), f.anuladas] as const] : []),
+          ].map(([t, href, on]) => (
+            <Link
+              key={t as string}
+              href={href as string}
+              className={`inline-flex min-h-[40px] shrink-0 items-center rounded-full px-4 text-sm font-extrabold transition active:scale-95 ${
+                on ? "bg-white text-brand shadow-flotante" : "bg-white/15 text-white hover:bg-white/25"
+              }`}
+            >
+              {t as string}
+              {on && !f.anuladas ? <span className="ml-1.5 rounded-full bg-brand-suave px-1.5 text-xs">{fmtNumber(total)}</span> : null}
+            </Link>
+          ))}
+        </nav>
+      </Encabezado>
+
+      <details className="card group p-0" open={!!(f.vehiculo || f.chofer)}>
+        <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-3 px-5 font-extrabold [&::-webkit-details-marker]:hidden">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-suave text-brand">
+            <SlidersHorizontal size={18} strokeWidth={2.6} />
+          </span>
+          Buscar por vehículo, chofer o fechas
+          {f.vehiculo || f.chofer ? <Etiqueta tono="marca">Filtros activos</Etiqueta> : null}
+          <ChevronDown size={20} strokeWidth={2.6} className="ml-auto text-tenue transition group-open:rotate-180" />
         </summary>
-        <form method="get" action="/historial" className="mt-3 space-y-3">
-          <div className={`grid gap-3 ${puedeCorregir ? "grid-cols-2" : "grid-cols-1"}`}>
+        <form method="get" action="/historial" className="grid gap-4 border-t border-linea px-5 pb-5 pt-4 lg:grid-cols-4 lg:items-end">
+          <div>
+            <label className="label">Vehículo</label>
+            <select name="vehiculo" className="field" defaultValue={f.vehiculo}>
+              <option value="">Todos</option>
+              {(optV || []).map((v: any) => (
+                <option key={v.id} value={v.id}>
+                  {v.nombre} · {v.patente}
+                </option>
+              ))}
+            </select>
+          </div>
+          {puedeCorregir ? (
             <div>
-              <label className="label">Vehículo</label>
-              <select name="vehiculo" className="field" defaultValue={f.vehiculo}>
+              <label className="label">Chofer</label>
+              <select name="chofer" className="field" defaultValue={f.chofer}>
                 <option value="">Todos</option>
-                {(optV || []).map((v: any) => (
-                  <option key={v.id} value={v.id}>
-                    {v.nombre} — {v.patente}
+                {(optP || []).map((p: any) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre_completo || "(sin nombre)"}
                   </option>
                 ))}
               </select>
             </div>
-            {puedeCorregir ? (
-              <div>
-                <label className="label">Chofer</label>
-                <select name="chofer" className="field" defaultValue={f.chofer}>
-                  <option value="">Todos</option>
-                  {(optP || []).map((p: any) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre_completo || "(sin nombre)"}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          ) : null}
+          <div className="grid grid-cols-2 gap-3 lg:col-span-2">
             <div>
               <label className="label">Desde</label>
               <input type="date" name="desde" className="field" defaultValue={f.desde} />
@@ -323,23 +380,12 @@ export default async function HistorialPage({
               <input type="date" name="hasta" className="field" defaultValue={f.hasta} />
             </div>
           </div>
-          {puedeCorregir ? (
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                name="anuladas"
-                value="1"
-                defaultChecked={f.anuladas}
-                className="h-4 w-4 accent-brand"
-              />
-              Ver solo las cargas anuladas
-            </label>
-          ) : null}
-          <div className="flex gap-2">
-            <Link href="/historial" className="btn-ghost flex-1 text-center">
+          {f.anuladas ? <input type="hidden" name="anuladas" value="1" /> : null}
+          <div className="flex gap-3 lg:col-span-4 lg:justify-end">
+            <Link href="/historial" className="btn-ghost flex-1 lg:flex-none">
               Limpiar
             </Link>
-            <button type="submit" className="btn-primary flex-1">
+            <button type="submit" className="btn-primary flex-1 lg:flex-none">
               Buscar
             </button>
           </div>
@@ -348,205 +394,244 @@ export default async function HistorialPage({
 
       {f.anuladas ? (
         faltaSql ? (
-          <div className="card text-center text-sm text-amber-700">
-            Para ver y anular cargas falta correr el SQL
-            migracion_anular_cargas.sql en Supabase.
-          </div>
+          <Vacio
+            icono={<ClipboardList size={26} strokeWidth={2.4} />}
+            titulo="Falta un ajuste en la base"
+            texto="Para ver y anular cargas falta correr el SQL migracion_anular_cargas.sql en Supabase."
+          />
         ) : anuladas.length === 0 ? (
-          <div className="card text-center text-sm text-slate-400">
-            No hay cargas anuladas{hayFiltros ? " con esos filtros" : ""}.
-          </div>
+          <Vacio
+            icono={<ClipboardList size={26} strokeWidth={2.4} />}
+            titulo="No hay cargas anuladas"
+            texto={hayFiltros ? "Probá con otras fechas o sacá los filtros." : undefined}
+          />
         ) : (
-          <ul className="space-y-2">
+          <ul className="card divide-y divide-linea p-0">
             {anuladas.map((a) => (
-              <li key={a.id} className="card border-red-200 bg-red-50/40">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold">
-                      {nombreVeh.get(a.vehiculo_id) ?? "—"}{" "}
-                      <span className="ml-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
-                        ANULADA
-                      </span>
+              <li key={a.id} className="px-4 py-4 lg:px-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-error-suave font-display text-sm font-extrabold text-error">
+                    {sigla(nombreVeh.get(a.vehiculo_id)?.split(" · ")[1])}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-2 font-extrabold">
+                      {nombreVeh.get(a.vehiculo_id) ?? "—"} <Etiqueta tono="error">Anulada</Etiqueta>
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {fmtDateTime(a.registrado_en)} ·{" "}
-                      {a.chofer_id ? (nombrePersona.get(a.chofer_id) ?? "—") : "—"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{fmtNumber(Number(a.litros), 1)} L</p>
-                    <p className="text-xs text-slate-500">
-                      {fmtNumber(Number(a.odometro_km))} km
+                    <p className="text-xs font-semibold text-suave">
+                      {fmtDateTime(a.registrado_en)} · {a.chofer_id ? (nombrePersona.get(a.chofer_id) ?? "—") : "—"} ·{" "}
+                      {fmtNumber(Number(a.litros), 2)} L · {fmtNumber(Number(a.odometro_km))} km
                       {a.costo_total != null ? ` · ${fmtMoney(Number(a.costo_total))}` : ""}
                     </p>
+                    <p className="mt-2 rounded-xl bg-error-suave px-3 py-2 text-xs font-bold text-error">
+                      Motivo: {a.anulada_motivo ?? "—"}
+                      <span className="block font-semibold">
+                        {a.anulada_por ? `${nombrePersona.get(a.anulada_por) ?? ""} · ` : ""}
+                        {fmtDateTime(a.anulada_en)}
+                      </span>
+                    </p>
+                    <AnularCargaForm id={a.id} anular={false} />
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-red-800">
-                  Anulada: {a.anulada_motivo ?? "—"}
-                  <span className="block text-red-600">
-                    {a.anulada_por ? `${nombrePersona.get(a.anulada_por) ?? ""} · ` : ""}
-                    {fmtDateTime(a.anulada_en)}
-                  </span>
-                </p>
-                <AnularCargaForm id={a.id} anular={false} />
               </li>
             ))}
           </ul>
         )
       ) : cargas.length === 0 ? (
-        <div className="card text-center text-sm text-slate-400">
-          {hayFiltros ? "No hay cargas con esos filtros." : "No hay cargas registradas."}
-        </div>
+        <Vacio
+          icono={<Fuel size={26} strokeWidth={2.4} />}
+          titulo={hayFiltros ? "No hay cargas con esos filtros" : "Todavía no hay cargas"}
+          texto={hayFiltros ? "Probá con otras fechas o sacá los filtros." : "Cuando registres una carga, aparece acá."}
+          accion={
+            hayFiltros ? (
+              <Link href="/historial" className="btn-ghost">
+                Ver todas
+              </Link>
+            ) : (
+              <Link href="/cargar" className="btn-primary">
+                Cargar combustible
+              </Link>
+            )
+          }
+        />
       ) : (
-        <ul className="space-y-2">
-          {cargas.map((r) => {
-            const anomalia =
-              r.litros_por_100km != null &&
-              (r.litros_por_100km < 3 || r.litros_por_100km > 50);
-            return (
-              <li key={r.id} className="card">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold">
-                      {r.vehiculo_nombre}{" "}
-                      <span className="text-xs font-normal text-slate-400">
-                        {r.patente}
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {fmtDateTime(r.registrado_en)}
-                      {r.combustible_nombre ? ` · ${r.combustible_nombre}` : ""}
-                    </p>
-                    {r.chofer_nombre ? (
-                      <p className="text-xs text-slate-400">
-                        Chofer: {r.chofer_nombre}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{fmtNumber(r.litros, 1)} L</p>
-                    {r.costo_total != null ? (
-                      <p className="text-xs text-slate-400">
-                        {fmtMoney(r.costo_total)}
-                      </p>
-                    ) : null}
-                  </div>
+        <div className="space-y-5">
+          {grupos.map((g) => (
+            <section key={g.mes}>
+              <h2 className="mb-2 px-1 font-display text-lg font-extrabold">{g.mes}</h2>
+              <div className="card p-0">
+                <div className="hidden grid-cols-[2.4fr_1.6fr_1fr_1.2fr_1.3fr_28px] gap-3 border-b border-linea px-5 py-3 text-xs font-extrabold uppercase tracking-wide text-tenue lg:grid">
+                  <span>Vehículo · fecha</span>
+                  <span>Chofer · estación</span>
+                  <span className="text-right">Litros</span>
+                  <span className="text-right">Total</span>
+                  <span className="text-right">Consumo</span>
+                  <span />
                 </div>
+                <ul className="divide-y divide-linea">
+                  {g.filas.map((r) => {
+                    const anomalia =
+                      r.litros_por_100km != null && (r.litros_por_100km < 3 || r.litros_por_100km > 50);
+                    const ediciones = edicionesPorCarga.get(r.id) || [];
+                    const editada = ediciones.length > 0 || !!r.odometro_corregido_en;
+                    const estadoBadge =
+                      r.litros_por_100km == null ? (
+                        <Etiqueta tono="neutro">1ª carga</Etiqueta>
+                      ) : anomalia ? (
+                        <Etiqueta tono="alerta">Fuera de rango</Etiqueta>
+                      ) : (
+                        <Etiqueta tono="ok">Normal</Etiqueta>
+                      );
+                    return (
+                      <li key={r.id}>
+                        <details className="group">
+                          <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 transition hover:bg-fondo/60 lg:grid lg:grid-cols-[2.4fr_1.6fr_1fr_1.2fr_1.3fr_28px] lg:px-5 [&::-webkit-details-marker]:hidden">
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                              <span
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-display text-sm font-extrabold ${colorVehiculo(r.vehiculo_id)}`}
+                              >
+                                {sigla(r.patente)}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="truncate font-extrabold">
+                                  {r.vehiculo_nombre}{" "}
+                                  <span className="text-xs font-bold text-tenue">{r.patente}</span>
+                                </p>
+                                <p className="truncate text-xs font-semibold text-suave">
+                                  {fmtDateTime(r.registrado_en)}
+                                  <span className="lg:hidden">
+                                    {" "}
+                                    · {fmtNumber(Number(r.litros), 2)} L
+                                    {r.estacion ? ` · ${r.estacion.split(" · ")[0]}` : ""}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                            <div className="hidden min-w-0 lg:block">
+                              <p className="truncate text-sm font-bold">{r.chofer_nombre ?? "—"}</p>
+                              <p className="truncate text-xs font-semibold text-suave">{r.estacion ?? "—"}</p>
+                            </div>
+                            <p className="hidden text-right font-bold tabular-nums lg:block">{fmtNumber(Number(r.litros), 2)} L</p>
+                            <p className="hidden text-right font-bold tabular-nums lg:block">
+                              {r.costo_total != null ? fmtMoney(r.costo_total) : "—"}
+                            </p>
+                            <div className="shrink-0 text-right">
+                              <p className="font-display text-base font-extrabold leading-tight tabular-nums">
+                                {r.litros_por_100km != null ? `${fmtNumber(r.litros_por_100km, 1)} L/100` : "—"}
+                              </p>
+                              <div className="mt-0.5 flex justify-end gap-1">
+                                {editada ? <Etiqueta tono="oro">Editada</Etiqueta> : null}
+                                {estadoBadge}
+                              </div>
+                            </div>
+                            <ChevronDown
+                              size={20}
+                              strokeWidth={2.6}
+                              className="hidden shrink-0 text-tenue transition group-open:rotate-180 lg:block"
+                            />
+                          </summary>
 
-                <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-100 pt-2 text-center text-xs">
-                  <div>
-                    <p className="text-slate-400">Odómetro</p>
-                    <p className="font-medium">{fmtNumber(r.odometro_km)} km</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Recorrido</p>
-                    <p className="font-medium">
-                      {r.distancia_km != null
-                        ? `${fmtNumber(r.distancia_km)} km`
-                        : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400">Consumo</p>
-                    <p
-                      className={`font-medium ${
-                        anomalia ? "text-amber-600" : ""
-                      }`}
-                    >
-                      {r.litros_por_100km != null
-                        ? `${fmtNumber(r.litros_por_100km, 1)} L/100 km`
-                        : "1ª carga"}
-                      {anomalia ? " ⚠️" : ""}
-                    </p>
-                  </div>
-                </div>
+                          <div className="space-y-3 bg-fondo/60 px-4 pb-4 pt-3 lg:px-5">
+                            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-2xl bg-white p-4 text-sm sm:grid-cols-4">
+                              {[
+                                ["Odómetro", `${fmtNumber(r.odometro_km)} km`],
+                                ["Recorrido", r.distancia_km != null ? `${fmtNumber(r.distancia_km)} km` : "—"],
+                                ["Litros", `${fmtNumber(Number(r.litros), 2)} L`],
+                                ["Total", r.costo_total != null ? fmtMoney(r.costo_total) : "—"],
+                                ["Precio por litro", r.precio_litro != null ? fmtMoney(r.precio_litro) : "—"],
+                                ["Combustible", r.combustible_nombre ?? "—"],
+                                ["Chofer", r.chofer_nombre ?? "—"],
+                                ["Tanque lleno", r.tanque_lleno ? "Sí" : "No"],
+                              ].map(([k, v]) => (
+                                <div key={k}>
+                                  <dt className="text-xs font-bold text-tenue">{k}</dt>
+                                  <dd className="font-extrabold">{v}</dd>
+                                </div>
+                              ))}
+                              <div className="col-span-2 sm:col-span-4">
+                                <dt className="text-xs font-bold text-tenue">Estación</dt>
+                                <dd className="font-extrabold">{r.estacion ?? "—"}</dd>
+                              </div>
+                            </dl>
 
-                {r.odometro_corregido_en ? (
-                  <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    Km corregido
-                    {r.odometro_original != null
-                      ? ` (antes ${fmtNumber(r.odometro_original)} km)`
-                      : ""}
-                    {r.odometro_corregido_motivo
-                      ? `: ${r.odometro_corregido_motivo}`
-                      : ""}
-                    <span className="block text-amber-600">
-                      {r.odometro_corregido_por_nombre
-                        ? `${r.odometro_corregido_por_nombre} · `
-                        : ""}
-                      {fmtDateTime(r.odometro_corregido_en)}
-                    </span>
-                  </p>
-                ) : null}
+                            {r.odometro_corregido_en ? (
+                              <p className="rounded-xl bg-oro-suave px-3 py-2 text-xs font-bold text-oro-dark">
+                                Km corregido
+                                {r.odometro_original != null ? ` (antes ${fmtNumber(r.odometro_original)} km)` : ""}
+                                {r.odometro_corregido_motivo ? `: ${r.odometro_corregido_motivo}` : ""}
+                                <span className="block font-semibold">
+                                  {r.odometro_corregido_por_nombre ? `${r.odometro_corregido_por_nombre} · ` : ""}
+                                  {fmtDateTime(r.odometro_corregido_en)}
+                                </span>
+                              </p>
+                            ) : null}
 
-                {(edicionesPorCarga.get(r.id) || []).map((ed, i) => (
-                  <div
-                    key={i}
-                    className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"
-                  >
-                    <p className="font-semibold">
-                      {ed.cambios.some((c) => c.campo === "Registro")
-                        ? `Registrada por administración: ${ed.motivo}`
-                        : ed.cambios.some((c) => c.campo === "Restauración")
-                          ? `Restaurada (estuvo anulada): ${ed.motivo}`
-                          : ed.cambios.some((c) => c.campo === "Anulación")
-                            ? `Estuvo anulada: ${ed.motivo}`
-                          : `Carga corregida: ${ed.motivo}`}
-                    </p>
-                    {ed.cambios
-                      .filter(
-                        (c) =>
-                          c.campo !== "Registro" &&
-                          c.campo !== "Restauración" &&
-                          c.campo !== "Anulación",
-                      )
-                      .map((c, j) => (
-                      <p key={j}>
-                        {c.campo}: {c.valor_anterior ?? "—"} →{" "}
-                        <span className="font-medium">
-                          {c.valor_nuevo ?? "—"}
-                        </span>
-                      </p>
-                    ))}
-                    <p className="text-amber-600">
-                      {ed.por ? `${ed.por} · ` : ""}
-                      {fmtDateTime(ed.en)}
-                    </p>
-                  </div>
-                ))}
+                            {ediciones.map((ed, i) => (
+                              <div key={i} className="rounded-xl bg-oro-suave px-3 py-2 text-xs font-semibold text-oro-dark">
+                                <p className="font-extrabold">
+                                  {ed.cambios.some((c) => c.campo === "Registro")
+                                    ? `Registrada por administración: ${ed.motivo}`
+                                    : ed.cambios.some((c) => c.campo === "Restauración")
+                                      ? `Restaurada (estuvo anulada): ${ed.motivo}`
+                                      : ed.cambios.some((c) => c.campo === "Anulación")
+                                        ? `Estuvo anulada: ${ed.motivo}`
+                                        : `Carga corregida: ${ed.motivo}`}
+                                </p>
+                                {ed.cambios
+                                  .filter((c) => c.campo !== "Registro" && c.campo !== "Restauración" && c.campo !== "Anulación")
+                                  .map((c, j) => (
+                                    <p key={j}>
+                                      {c.campo}: {c.valor_anterior ?? "—"} → <span className="font-extrabold">{c.valor_nuevo ?? "—"}</span>
+                                    </p>
+                                  ))}
+                                <p>
+                                  {ed.por ? `${ed.por} · ` : ""}
+                                  {fmtDateTime(ed.en)}
+                                </p>
+                              </div>
+                            ))}
 
-                {puedeCorregir && editables.get(r.id) ? (
-                  <EditarCargaForm
-                    carga={editables.get(r.id)!}
-                    vehiculos={optVehiculos}
-                    combustibles={optCombustibles}
-                    estaciones={optEstaciones}
-                    choferes={optChoferes}
-                    emblemas={optEmblemas}
-                  />
-                ) : null}
-                {puedeCorregir ? <AnularCargaForm id={r.id} anular /> : null}
-              </li>
-            );
-          })}
-        </ul>
+                            {puedeCorregir ? (
+                              <div className="flex flex-wrap items-start gap-2">
+                                {editables.get(r.id) ? (
+                                  <EditarCargaForm
+                                    carga={editables.get(r.id)!}
+                                    vehiculos={optVehiculos}
+                                    combustibles={optCombustibles}
+                                    estaciones={optEstaciones}
+                                    choferes={optChoferes}
+                                    emblemas={optEmblemas}
+                                  />
+                                ) : null}
+                                <AnularCargaForm id={r.id} anular />
+                              </div>
+                            ) : null}
+                          </div>
+                        </details>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
       {paginas > 1 ? (
-        <div className="flex items-center justify-between gap-2 text-sm">
+        <div className="flex items-center justify-between gap-2">
           {f.pagina > 1 ? (
             <Link href={urlCon({ pagina: String(f.pagina - 1) })} className="btn-ghost">
-              ← Más nuevas
+              <ChevronLeft size={18} strokeWidth={2.6} /> Más nuevas
             </Link>
           ) : (
             <span />
           )}
-          <span className="text-slate-500">
+          <span className="text-sm font-bold text-suave">
             Página {f.pagina} de {paginas}
           </span>
           {f.pagina < paginas ? (
             <Link href={urlCon({ pagina: String(f.pagina + 1) })} className="btn-ghost">
-              Más viejas →
+              Ver más <ChevronRight size={18} strokeWidth={2.6} />
             </Link>
           ) : (
             <span />

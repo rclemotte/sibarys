@@ -10,9 +10,7 @@ function Confirmar({ anular }: { anular: boolean }) {
     <button
       type="submit"
       disabled={pending}
-      className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold text-white ${
-        anular ? "bg-red-600" : "bg-brand"
-      }`}
+      className={`btn flex-1 text-white ${anular ? "bg-error" : "bg-marca shadow-boton"}`}
     >
       {pending ? "Guardando…" : anular ? "Anular carga" : "Restaurar carga"}
     </button>
@@ -35,7 +33,7 @@ export default function AnularCargaForm({
 
   if (state.success)
     return (
-      <p className="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+      <p className="mt-2 rounded-lg bg-ok-suave px-3 py-2 text-xs text-ok">
         {state.success}
       </p>
     );
@@ -45,10 +43,8 @@ export default function AnularCargaForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`mt-2 ml-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium ${
-          anular
-            ? "border-red-200 text-red-600 hover:bg-red-50"
-            : "border-slate-300 text-slate-600 hover:bg-slate-50"
+        className={`btn-chico mt-2 border-2 bg-white ${
+          anular ? "border-error/30 text-error hover:bg-error-suave" : "border-linea text-tinta hover:bg-fondo"
         }`}
       >
         {anular ? "Anular carga" : "Restaurar"}
@@ -59,12 +55,12 @@ export default function AnularCargaForm({
     <form
       action={action}
       className={`mt-2 space-y-2 rounded-xl border p-3 ${
-        anular ? "border-red-200 bg-red-50/50" : "border-slate-200"
+        anular ? "border-error/30 bg-error-suave" : "border-linea"
       }`}
     >
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="accion" value={anular ? "anular" : "restaurar"} />
-      <p className="text-xs text-slate-600">
+      <p className="text-xs text-suave">
         {anular
           ? "La carga deja de contar en consumo, reportes y exportaciones. No se borra: queda en el Historial y se puede restaurar."
           : "La carga vuelve a contar en consumo, reportes y exportaciones."}
@@ -78,7 +74,7 @@ export default function AnularCargaForm({
         required
       />
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-xs text-error">
           {state.error}
         </p>
       ) : null}

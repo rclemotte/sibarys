@@ -108,7 +108,7 @@ export default function ControlPreciosPanel() {
               ))}
             </select>
           </div>
-          <label className="mt-6 flex items-center gap-2 text-sm text-slate-600">
+          <label className="mt-6 flex items-center gap-2 text-sm text-suave">
             <input
               type="checkbox"
               className="h-4 w-4 accent-brand"
@@ -118,7 +118,7 @@ export default function ControlPreciosPanel() {
             Ver solo las que tienen diferencia
           </label>
         </div>
-        {error ? <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">{error}</p> : null}
+        {error ? <p className="rounded-lg bg-alerta-suave px-3 py-2 text-sm text-alerta">{error}</p> : null}
         <button type="button" className="btn-primary w-full" onClick={consultar} disabled={cargando}>
           {cargando ? "Revisando…" : "Revisar precios"}
         </button>
@@ -128,37 +128,37 @@ export default function ControlPreciosPanel() {
         <>
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
             <div className="card">
-              <p className="text-[11px] font-semibold uppercase text-slate-400">Controladas</p>
+              <p className="text-[11px] font-semibold uppercase text-tenue">Controladas</p>
               <p className="text-xl font-bold">{fmtNumber(res.controladas.length)}</p>
-              <p className="text-xs text-slate-500">de {fmtNumber(filas!.length)} cargas</p>
+              <p className="text-xs text-suave">de {fmtNumber(filas!.length)} cargas</p>
             </div>
             <div className="card">
-              <p className="text-[11px] font-semibold uppercase text-slate-400">Con diferencia</p>
-              <p className={`text-xl font-bold ${res.fuera.length ? "text-red-600" : ""}`}>
+              <p className="text-[11px] font-semibold uppercase text-tenue">Con diferencia</p>
+              <p className={`text-xl font-bold ${res.fuera.length ? "text-error" : ""}`}>
                 {fmtNumber(res.fuera.length)}
               </p>
-              <p className="text-xs text-slate-500">más de {tol}% arriba o abajo</p>
+              <p className="text-xs text-suave">más de {tol}% arriba o abajo</p>
             </div>
             <div className="card">
-              <p className="text-[11px] font-semibold uppercase text-slate-400">Pagado de más</p>
-              <p className={`text-xl font-bold ${res.deMas ? "text-red-600" : ""}`}>{fmtMoney(res.deMas)}</p>
-              <p className="text-xs text-slate-500">de menos: {fmtMoney(res.deMenos)}</p>
+              <p className="text-[11px] font-semibold uppercase text-tenue">Pagado de más</p>
+              <p className={`text-xl font-bold ${res.deMas ? "text-error" : ""}`}>{fmtMoney(res.deMas)}</p>
+              <p className="text-xs text-suave">de menos: {fmtMoney(res.deMenos)}</p>
             </div>
             <div className="card">
-              <p className="text-[11px] font-semibold uppercase text-slate-400">Sin control</p>
+              <p className="text-[11px] font-semibold uppercase text-tenue">Sin control</p>
               <p className="text-xl font-bold">{fmtNumber(res.sinControl.length)}</p>
-              <p className="text-xs text-slate-500">sin emblema o sin precio cargado</p>
+              <p className="text-xs text-suave">sin emblema o sin precio cargado</p>
             </div>
           </div>
 
           {res.lista.length === 0 ? (
-            <div className="card text-center text-sm text-slate-500">
+            <div className="card text-center text-sm text-suave">
               {soloDif ? "Ninguna carga supera la diferencia elegida. 👍" : "No hay cargas en esas fechas."}
             </div>
           ) : (
             <div className="card overflow-x-auto p-0">
               <table className="w-full min-w-[760px] text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500">
+                <thead className="bg-fondo text-suave">
                   <tr>
                     {["Fecha", "Vehículo · Chofer", "Estación · Emblema", "Combustible", "Litros", "Pagó Gs./L", "Ref. Gs./L", "Dif.", "Dif. Gs."].map((h) => (
                       <th key={h} className="px-3 py-2 font-semibold">
@@ -171,28 +171,28 @@ export default function ControlPreciosPanel() {
                   {res.lista.map((r) => {
                     const fuera = r.difPct != null && Math.abs(r.difPct) > tol;
                     return (
-                      <tr key={r.id} className="border-t border-slate-100">
+                      <tr key={r.id} className="border-t border-linea">
                         <td className="whitespace-nowrap px-3 py-2">{fmtDateTime(r.registrado_en)}</td>
                         <td className="px-3 py-2">
                           <b>{r.vehiculo_nombre}</b>
-                          <span className="block text-slate-500">{r.chofer_nombre ?? "—"}</span>
+                          <span className="block text-suave">{r.chofer_nombre ?? "—"}</span>
                         </td>
                         <td className="px-3 py-2">
                           {r.estacion ?? "—"}
-                          <span className="block text-slate-500">{r.emblema ?? "Sin emblema"}</span>
+                          <span className="block text-suave">{r.emblema ?? "Sin emblema"}</span>
                         </td>
                         <td className="px-3 py-2">{r.combustible_nombre ?? "—"}</td>
                         <td className="px-3 py-2 text-right tabular-nums">{fmtNumber(Number(r.litros), 1)}</td>
                         <td className="px-3 py-2 text-right tabular-nums">{r.pagado != null ? fmtNumber(r.pagado) : "—"}</td>
                         <td className="px-3 py-2 text-right tabular-nums">{r.referencia != null ? fmtNumber(r.referencia) : "—"}</td>
-                        <td className={`whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums ${fuera ? (r.difPct! > 0 ? "text-red-600" : "text-blue-700") : "text-slate-500"}`}>
+                        <td className={`whitespace-nowrap px-3 py-2 text-right font-semibold tabular-nums ${fuera ? (r.difPct! > 0 ? "text-error" : "text-suave") : "text-suave"}`}>
                           {r.difPct != null
                             ? `${r.difPct > 0 ? "+" : ""}${fmtNumber(r.difPct, 1)}%`
                             : r.motivoSinControl === "sin_emblema"
                               ? "Sin emblema"
                               : "Sin precio"}
                         </td>
-                        <td className={`whitespace-nowrap px-3 py-2 text-right tabular-nums ${fuera && r.difGs! > 0 ? "text-red-600" : ""}`}>
+                        <td className={`whitespace-nowrap px-3 py-2 text-right tabular-nums ${fuera && r.difGs! > 0 ? "text-error" : ""}`}>
                           {r.difGs != null ? `${r.difGs > 0 ? "+" : ""}${fmtNumber(r.difGs)}` : "—"}
                         </td>
                       </tr>
@@ -205,7 +205,7 @@ export default function ControlPreciosPanel() {
 
           {res.lista.length > 0 ? (
             <button type="button" className="btn-ghost w-full" onClick={descargar}>
-              ⬇ Descargar esta lista en Excel
+              Descargar esta lista en Excel
             </button>
           ) : null}
         </>

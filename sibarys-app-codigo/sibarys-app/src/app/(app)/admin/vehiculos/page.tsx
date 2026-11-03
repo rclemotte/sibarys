@@ -3,7 +3,7 @@ import { referenciaL100 } from "@/lib/consumo";
 import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Vehiculo, TipoCombustible, Marca, Empresa } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import VehicleForm from "./VehicleForm";
 import VehicleFuelEditor from "./VehicleFuelEditor";
 import VehicleDataEditor from "./VehicleDataEditor";
@@ -27,7 +27,7 @@ export default async function VehiculosPage() {
 
   if (!tienePermiso(perfil, "puede_editar_vehiculos")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -66,9 +66,8 @@ export default async function VehiculosPage() {
   });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/vehiculos" />
 
       <VehicleForm tipos={tipos} marcas={marcas} empresas={empresas} />
 
@@ -77,19 +76,19 @@ export default async function VehiculosPage() {
           <li key={v.id} className="card">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-semibold">
+                <p className="font-extrabold">
                   {v.nombre}{" "}
                   {!v.activo ? (
-                    <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                    <span className="ml-1 rounded bg-neutro-suave px-1.5 py-0.5 text-[10px] text-suave">
                       inactivo
                     </span>
                   ) : null}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-tenue">
                   {v.patente} · {v.marca || "—"} {v.modelo || ""}{" "}
                   {v.anio ? `· ${v.anio}` : ""}
                 </p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-tenue">
                   {v.capacidad_tanque_litros != null
                     ? `Tanque ${fmtNumber(v.capacidad_tanque_litros, 0)} L`
                     : "Tanque —"}
@@ -110,7 +109,7 @@ export default async function VehiculosPage() {
                 <input type="hidden" name="activo" value={String(v.activo)} />
                 <button
                   type="submit"
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-lg border border-linea px-3 py-1.5 text-xs font-bold text-suave hover:bg-fondo"
                 >
                   {v.activo ? "Desactivar" : "Activar"}
                 </button>
@@ -127,7 +126,7 @@ export default async function VehiculosPage() {
           </li>
         ))}
         {vehiculos.length === 0 ? (
-          <li className="card text-center text-sm text-slate-400">
+          <li className="card text-center text-sm text-tenue">
             Todavía no hay vehículos.
           </li>
         ) : null}

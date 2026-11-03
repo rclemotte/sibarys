@@ -68,7 +68,7 @@ export default function EditarCargaForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-2 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+        className="btn-chico mt-2 border-2 border-linea bg-white text-tinta hover:bg-fondo"
       >
         Editar carga
       </button>
@@ -78,7 +78,7 @@ export default function EditarCargaForm({
   return (
     <form
       action={action}
-      className="mt-2 space-y-3 border-t border-slate-100 pt-3"
+      className="mt-2 w-full space-y-3 rounded-2xl bg-white p-4"
     >
       <input type="hidden" name="id" value={carga.id} />
       <input type="hidden" name="estacion_id" value={estacionId} />
@@ -184,7 +184,7 @@ export default function EditarCargaForm({
           onChange={(e) => setTotal(e.target.value)}
           required
         />
-        <p className="mt-1 text-[11px] text-slate-400">
+        <p className="mt-1 text-[11px] text-tenue">
           Precio por litro:{" "}
           {precioLitro != null
             ? `Gs. ${precioLitro.toLocaleString("es-AR")}`
@@ -217,7 +217,7 @@ export default function EditarCargaForm({
         </div>
       ) : null}
 
-      <label className="flex items-center gap-2 text-sm text-slate-600">
+      <label className="flex items-center gap-2 text-sm text-suave">
         <input
           type="checkbox"
           name="tanque_lleno"
@@ -250,12 +250,12 @@ export default function EditarCargaForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-xs text-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-xs text-ok">
           {state.success}
         </p>
       ) : null}

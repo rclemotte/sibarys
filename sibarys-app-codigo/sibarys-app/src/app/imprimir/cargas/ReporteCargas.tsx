@@ -16,8 +16,8 @@ export default function ReporteCargas({
   generado: string;
 }) {
   return (
-    <main className="mx-auto max-w-[1100px] bg-white p-6 text-slate-800 print:max-w-none print:p-0">
-      <style>{`@page { size: A4 landscape; margin: 12mm; } @media print { html, body { background: white !important; } }`}</style>
+    <main className="mx-auto max-w-[1100px] bg-white p-6 font-normal text-slate-800 print:max-w-none print:p-0">
+      <style>{`@page { size: A4 landscape; margin: 12mm; } html, body { background: white !important; }`}</style>
       <BotonImprimir />
 
       <header className="flex items-end justify-between border-b-2 border-slate-800 pb-3">

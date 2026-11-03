@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Perfil } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import NuevoUsuarioForm from "./NuevoUsuarioForm";
 import AsignarPasswordForm from "./AsignarPasswordForm";
 import { cambiarRol, guardarPermisos, toggleActivo } from "./actions";
@@ -16,7 +16,7 @@ import {
 export const dynamic = "force-dynamic";
 
 const btn =
-  "rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40";
+  "rounded-lg border border-linea px-2.5 py-1.5 text-xs font-bold text-suave hover:bg-fondo disabled:opacity-40";
 
 export default async function ChoferesPage() {
   const supabase = createClient();
@@ -25,7 +25,7 @@ export default async function ChoferesPage() {
 
   if (!tienePermiso(yo, "puede_gestionar_usuarios")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -43,9 +43,8 @@ export default async function ChoferesPage() {
   );
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/choferes" />
 
       <NuevoUsuarioForm puedeCrearAdmin={esSuper} />
 
@@ -60,12 +59,12 @@ export default async function ChoferesPage() {
                   <p className="truncate font-semibold">
                     {p.nombre_completo || "(sin nombre)"}
                     {soyYo ? (
-                      <span className="ml-1 text-xs font-normal text-slate-400">
+                      <span className="ml-1 text-xs font-normal text-tenue">
                         (vos)
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-tenue">
                     {p.cedula ? `Cédula ${p.cedula} · ` : ""}
                     {textoRol(p.rol)}
                     {!p.activo ? " · inactivo" : ""}
@@ -97,8 +96,8 @@ export default async function ChoferesPage() {
               </div>
 
               {esSuper && p.rol === "admin" ? (
-                <details className="rounded-xl bg-slate-50 px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-medium text-brand">
+                <details className="rounded-xl bg-fondo px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-bold text-brand">
                     Permisos de edición
                   </summary>
                   <form action={guardarPermisos} className="mt-2 space-y-2">
@@ -106,7 +105,7 @@ export default async function ChoferesPage() {
                     {PERMISOS.map((perm) => (
                       <label
                         key={perm.campo}
-                        className="flex items-start gap-2 text-sm text-slate-600"
+                        className="flex items-start gap-2 text-sm text-suave"
                       >
                         <input
                           type="checkbox"

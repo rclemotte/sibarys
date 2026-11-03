@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { TipoCombustible } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import CombustibleForm from "./CombustibleForm";
 import { toggleCombustible } from "./actions";
 
@@ -23,7 +23,7 @@ export default async function CombustiblesPage() {
 
   if (!tienePermiso(yo, "puede_editar_catalogos")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -37,14 +37,13 @@ export default async function CombustiblesPage() {
   const tipos = (data || []) as TipoCombustible[];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/combustibles" />
 
       <CombustibleForm />
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
+        <h2 className="mb-2 px-1 font-display text-lg font-extrabold text-tinta">
           Combustibles cargados
         </h2>
         <ul className="space-y-2">
@@ -53,15 +52,15 @@ export default async function CombustiblesPage() {
               key={t.id}
               className="card flex items-center justify-between gap-3"
             >
-              <p className="font-semibold">
+              <p className="font-extrabold">
                 {t.nombre}
                 {t.octanaje ? (
-                  <span className="ml-1 text-xs font-normal text-slate-400">
+                  <span className="ml-1 text-xs font-normal text-tenue">
                     (oct. {t.octanaje})
                   </span>
                 ) : null}
                 {!t.activo ? (
-                  <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                  <span className="ml-1 rounded bg-neutro-suave px-1.5 py-0.5 text-[10px] text-suave">
                     inactivo
                   </span>
                 ) : null}
@@ -69,14 +68,14 @@ export default async function CombustiblesPage() {
               <form action={toggleCombustible}>
                 <input type="hidden" name="id" value={t.id} />
                 <input type="hidden" name="activo" value={String(t.activo)} />
-                <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                <button className="rounded-lg border border-linea px-3 py-1.5 text-xs font-bold text-suave hover:bg-fondo">
                   {t.activo ? "Desactivar" : "Activar"}
                 </button>
               </form>
             </li>
           ))}
           {tipos.length === 0 ? (
-            <li className="card text-center text-sm text-slate-400">
+            <li className="card text-center text-sm text-tenue">
               Todavía no hay combustibles. Agregá uno arriba.
             </li>
           ) : null}

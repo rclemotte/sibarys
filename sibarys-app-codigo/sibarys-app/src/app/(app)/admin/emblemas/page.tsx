@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Emblema } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import EmblemaForm from "./EmblemaForm";
 import { toggleEmblema } from "./actions";
 
@@ -23,7 +23,7 @@ export default async function EmblemasPage() {
 
   if (!tienePermiso(yo, "puede_editar_catalogos")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -37,14 +37,13 @@ export default async function EmblemasPage() {
   const emblemas = (data || []) as Emblema[];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/emblemas" />
 
       <EmblemaForm />
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
+        <h2 className="mb-2 px-1 font-display text-lg font-extrabold text-tinta">
           Emblemas cargados
         </h2>
         <ul className="space-y-2">
@@ -53,10 +52,10 @@ export default async function EmblemasPage() {
               key={e.id}
               className="card flex items-center justify-between gap-3"
             >
-              <p className="font-semibold">
+              <p className="font-extrabold">
                 {e.nombre}{" "}
                 {!e.activo ? (
-                  <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                  <span className="ml-1 rounded bg-neutro-suave px-1.5 py-0.5 text-[10px] text-suave">
                     inactivo
                   </span>
                 ) : null}
@@ -64,14 +63,14 @@ export default async function EmblemasPage() {
               <form action={toggleEmblema}>
                 <input type="hidden" name="id" value={e.id} />
                 <input type="hidden" name="activo" value={String(e.activo)} />
-                <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                <button className="rounded-lg border border-linea px-3 py-1.5 text-xs font-bold text-suave hover:bg-fondo">
                   {e.activo ? "Desactivar" : "Activar"}
                 </button>
               </form>
             </li>
           ))}
           {emblemas.length === 0 ? (
-            <li className="card text-center text-sm text-slate-400">
+            <li className="card text-center text-sm text-tenue">
               Todavía no hay emblemas. Agregá uno arriba.
             </li>
           ) : null}

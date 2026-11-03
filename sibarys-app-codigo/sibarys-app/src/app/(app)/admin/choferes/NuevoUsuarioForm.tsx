@@ -39,7 +39,7 @@ export default function NuevoUsuarioForm({
 
   return (
     <form ref={ref} action={action} className="card space-y-3">
-      <h2 className="text-sm font-semibold text-slate-600">Nuevo usuario</h2>
+      <h2 className="text-sm font-semibold text-suave">Nuevo usuario</h2>
 
       <div>
         <label className="label">Nombre y apellido</label>
@@ -89,18 +89,18 @@ export default function NuevoUsuarioForm({
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-tenue">
         El usuario entra con su cédula y esta contraseña. No se le pide
         cambiarla.
       </p>
 
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-sm text-ok">
           {state.success}
         </p>
       ) : null}

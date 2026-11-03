@@ -64,9 +64,9 @@ export default function ExportarExcel() {
     <button
       onClick={descargar}
       disabled={cargando}
-      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      className="rounded-lg border border-linea bg-white px-3 py-2 text-sm font-bold text-tinta hover:bg-fondo disabled:opacity-50"
     >
-      {cargando ? "Generando…" : "⬇ Descargar Excel"}
+      {cargando ? "Generando…" : "Descargar Excel"}
     </button>
   );
 }

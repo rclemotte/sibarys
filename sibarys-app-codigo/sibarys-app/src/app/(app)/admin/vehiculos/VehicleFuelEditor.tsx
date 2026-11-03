@@ -19,7 +19,7 @@ export default function VehicleFuelEditor({
     .map((t) => t.nombre);
 
   return (
-    <div className="mt-2 border-t border-slate-100 pt-2">
+    <div className="mt-2 border-t border-linea pt-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-wrap gap-1">
           {nombres.length > 0 ? (
@@ -32,14 +32,14 @@ export default function VehicleFuelEditor({
               </span>
             ))
           ) : (
-            <span className="text-[11px] text-amber-600">
+            <span className="text-[11px] text-alerta">
               Sin combustibles
             </span>
           )}
         </div>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="shrink-0 text-xs font-medium text-brand"
+          className="shrink-0 text-xs font-bold text-brand"
         >
           {open ? "Cerrar" : "Editar"}
         </button>
@@ -52,7 +52,7 @@ export default function VehicleFuelEditor({
             {tipos.map((t) => (
               <label
                 key={t.id}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs"
+                className="flex items-center gap-2 rounded-lg border border-linea px-2.5 py-1.5 text-xs"
               >
                 <input
                   type="checkbox"

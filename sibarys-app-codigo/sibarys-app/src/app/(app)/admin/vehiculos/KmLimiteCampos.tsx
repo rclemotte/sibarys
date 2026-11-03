@@ -11,8 +11,8 @@ export default function KmLimiteCampos({
   inicial?: number | null;
 }) {
   return (
-    <div className="mt-3 space-y-2 border-t border-slate-200 pt-3">
-      <p className="text-xs font-semibold uppercase text-slate-500">Límite de km del alquiler</p>
+    <div className="mt-3 space-y-2 border-t border-linea pt-3">
+      <p className="text-xs font-semibold uppercase text-suave">Límite de km del alquiler</p>
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="label">Controlar km desde</label>
@@ -56,7 +56,7 @@ export default function KmLimiteCampos({
           />
         </div>
       </div>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-tenue">
         Si no cargás los km al inicio, se toma el odómetro de la primera carga desde esa fecha.
         Dejá la fecha vacía para no controlar.
       </p>

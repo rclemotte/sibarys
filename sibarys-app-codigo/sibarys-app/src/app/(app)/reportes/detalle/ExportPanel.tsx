@@ -101,7 +101,7 @@ export default function ExportPanel({
 
   return (
     <div className="card space-y-4">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-suave">
         Elegí los filtros (o dejalos vacíos para exportar todo) y el formato.
       </p>
 
@@ -171,13 +171,13 @@ export default function ExportPanel({
               className={`rounded-xl border px-3 py-2 text-left ${
                 formato === valor
                   ? "border-brand bg-brand/5 ring-1 ring-brand"
-                  : "border-slate-200 bg-white"
+                  : "border-linea bg-white"
               }`}
             >
-              <span className="block text-sm font-semibold text-slate-700">
+              <span className="block text-sm font-semibold text-tinta">
                 {titulo}
               </span>
-              <span className="block text-xs text-slate-500">{sub}</span>
+              <span className="block text-xs text-suave">{sub}</span>
             </button>
           ))}
         </div>
@@ -187,10 +187,10 @@ export default function ExportPanel({
         <p
           className={`rounded-lg px-3 py-2 text-sm ${
             info.tipo === "ok"
-              ? "bg-emerald-50 text-emerald-700"
+              ? "bg-ok-suave text-ok"
               : info.tipo === "vacio"
-              ? "bg-amber-50 text-amber-700"
-              : "bg-red-50 text-red-700"
+              ? "bg-alerta-suave text-alerta"
+              : "bg-error-suave text-error"
           }`}
         >
           {info.msg}
@@ -210,7 +210,7 @@ export default function ExportPanel({
           {cargando
             ? "Generando…"
             : formato === "excel"
-              ? "⬇ Descargar Excel"
+              ? "Descargar Excel"
               : "🖨 Ver e imprimir PDF"}
         </button>
       </div>

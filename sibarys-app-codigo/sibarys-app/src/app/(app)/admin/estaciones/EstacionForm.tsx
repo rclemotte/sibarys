@@ -66,13 +66,13 @@ export default function EstacionForm({ emblemas }: { emblemas: Emblema[] }) {
         </div>
       </div>
       {emblemas.length === 0 ? (
-        <p className="-mt-1 text-xs text-amber-600">
+        <p className="-mt-1 text-xs text-alerta">
           No hay emblemas cargados. Agregalos en la pestaña Emblemas.
         </p>
       ) : null}
 
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
           {state.error}
         </p>
       ) : null}

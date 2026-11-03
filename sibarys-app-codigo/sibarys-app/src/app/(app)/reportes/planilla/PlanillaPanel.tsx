@@ -80,7 +80,7 @@ export default function PlanillaPanel({
         </div>
       </div>
 
-      <ul className="space-y-1 text-xs text-slate-500">
+      <ul className="space-y-1 text-xs text-suave">
         <li>• Una hoja por modelo de vehículo (los alquilados juntos), con cada carga, km recorridos, consumo e importe por emblema.</li>
         <li>• Resumen por móvil, con totales por grupo.</li>
         <li>• Litros y monto por tipo de combustible, día por día.</li>
@@ -88,13 +88,13 @@ export default function PlanillaPanel({
       </ul>
 
       {info ? (
-        <p className={`rounded-lg px-3 py-2 text-sm ${info.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>
+        <p className={`rounded-lg px-3 py-2 text-sm ${info.ok ? "bg-ok-suave text-ok" : "bg-alerta-suave text-alerta"}`}>
           {info.msg}
         </p>
       ) : null}
 
       <button type="button" className="btn-primary w-full" onClick={generar} disabled={cargando}>
-        {cargando ? "Generando…" : "⬇ Descargar planilla"}
+        {cargando ? "Generando…" : "Descargar planilla"}
       </button>
     </div>
   );

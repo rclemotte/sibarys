@@ -1,6 +1,8 @@
 "use client";
 
 import ReportesNav from "@/components/ReportesNav";
+import Encabezado from "@/components/ui/Encabezado";
+import { Download } from "lucide-react";
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { fmtNumber, fmtMoney } from "@/lib/format";
@@ -50,12 +52,12 @@ function Delta({
   const malo = invertir ? !sube : sube;
   const color =
     Math.abs(v) < 0.5
-      ? "text-slate-400"
+      ? "text-tenue"
       : malo
-        ? "text-amber-700"
-        : "text-emerald-700";
+        ? "text-alerta"
+        : "text-ok";
   return (
-    <span className={`text-xs font-medium ${color}`}>
+    <span className={`text-xs font-bold ${color}`}>
       {sube ? "▲" : "▼"} {fmtNumber(Math.abs(v), 0)}% vs periodo anterior
     </span>
   );
@@ -72,10 +74,10 @@ function Kpi({
 }) {
   return (
     <div className="card">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-tenue">
         {label}
       </p>
-      <p className="mt-1 text-xl font-bold leading-tight text-slate-900">
+      <p className="mt-1 text-xl font-bold leading-tight text-tinta">
         {valor}
       </p>
       <div className="mt-0.5 min-h-[1rem]">{extra}</div>
@@ -87,17 +89,17 @@ const SEMAFORO: Record<
   Semaforo,
   { label: string; icono: string; clase: string }
 > = {
-  ok: { label: "Normal", icono: "✓", clase: "bg-emerald-50 text-emerald-800" },
+  ok: { label: "Normal", icono: "✓", clase: "bg-ok-suave text-ok" },
   atencion: {
     label: "Atención",
     icono: "!",
-    clase: "bg-amber-50 text-amber-800",
+    clase: "bg-alerta-suave text-alerta",
   },
-  alto: { label: "Alto", icono: "▲", clase: "bg-red-50 text-red-800" },
+  alto: { label: "Alto", icono: "▲", clase: "bg-error-suave text-error" },
   sin_datos: {
     label: "Pocos datos",
     icono: "…",
-    clase: "bg-slate-100 text-slate-500",
+    clase: "bg-neutro-suave text-suave",
   },
 };
 
@@ -366,51 +368,41 @@ export default function ReportesPanel({
   const selectCls = "field py-2 text-sm";
 
   return (
-    <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[min(72rem,calc(100vw-3rem))] lg:-translate-x-1/2">
-      {esAdmin ? <ReportesNav /> : null}
-      <div className="flex items-end justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-bold">
-            {esAdmin ? "Reportes" : "Mis cargas"}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {f.desde.split("-").reverse().join("/")} al{" "}
-            {f.hasta.split("-").reverse().join("/")}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn-ghost px-3 py-2 text-sm"
-          onClick={exportar}
-        >
-          ⬇ Excel
-        </button>
-      </div>
-
-      {/* Periodo */}
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-        {[
-          ...PERIODOS.map((p) => ({ clave: p.clave, label: p.label })),
-          { clave: "custom", label: "Elegir fechas" },
-        ].map((p) => (
+    <div className="space-y-5">
+      <Encabezado
+        titulo={esAdmin ? "Análisis" : "Mis cargas"}
+        subtitulo={`${f.desde.split("-").reverse().join("/")} al ${f.hasta.split("-").reverse().join("/")}`}
+        accion={
           <button
-            key={p.clave}
             type="button"
-            onClick={() =>
-              p.clave === "custom"
-                ? setPeriodo("custom")
-                : elegirPeriodo(p.clave)
-            }
-            className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium ${
-              periodo === p.clave
-                ? "bg-brand text-white"
-                : "border border-slate-200 bg-white text-slate-600"
-            }`}
+            onClick={exportar}
+            aria-label="Descargar Excel"
+            title="Descargar Excel"
+            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-brand shadow-flotante transition active:scale-95"
           >
-            {p.label}
+            <Download size={22} strokeWidth={2.4} />
           </button>
-        ))}
-      </div>
+        }
+      >
+        <div className="sin-barra -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">
+          {[
+            ...PERIODOS.map((p) => ({ clave: p.clave, label: p.label })),
+            { clave: "custom", label: "Elegir fechas" },
+          ].map((p) => (
+            <button
+              key={p.clave}
+              type="button"
+              onClick={() => (p.clave === "custom" ? setPeriodo("custom") : elegirPeriodo(p.clave))}
+              className={`inline-flex min-h-[40px] shrink-0 items-center rounded-full px-4 text-sm font-extrabold transition active:scale-95 ${
+                periodo === p.clave ? "bg-white text-brand shadow-flotante" : "bg-white/15 text-white hover:bg-white/25"
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </Encabezado>
+      {esAdmin ? <ReportesNav /> : null}
 
       {periodo === "custom" ? (
         <div className="grid grid-cols-2 gap-2">
@@ -442,7 +434,7 @@ export default function ReportesPanel({
       <div className="card space-y-3 py-3">
         <button
           type="button"
-          className="flex w-full items-center justify-between text-sm font-semibold text-slate-700"
+          className="flex w-full items-center justify-between text-sm font-semibold text-tinta"
           onClick={() => setVerFiltros((v) => !v)}
           aria-expanded={verFiltros}
         >
@@ -453,12 +445,12 @@ export default function ReportesPanel({
                 {activos}
               </span>
             ) : (
-              <span className="font-normal text-slate-400">
+              <span className="font-normal text-tenue">
                 (todos los datos)
               </span>
             )}
           </span>
-          <span className="text-slate-400">{verFiltros ? "▲" : "▼"}</span>
+          <span className="text-tenue">{verFiltros ? "▲" : "▼"}</span>
         </button>
 
         {verFiltros ? (
@@ -559,7 +551,7 @@ export default function ReportesPanel({
             </div>
             <div className="sm:col-span-2 lg:col-span-1">
               <label className="label">Propiedad</label>
-              <div className="grid grid-cols-3 gap-1 rounded-xl bg-slate-100 p-1">
+              <div className="grid grid-cols-3 gap-1 rounded-xl bg-neutro-suave p-1">
                 {[
                   { v: "", l: "Todos" },
                   { v: "propios", l: "Propios" },
@@ -569,10 +561,10 @@ export default function ReportesPanel({
                     key={o.v}
                     type="button"
                     onClick={() => set("propiedad", o.v)}
-                    className={`rounded-lg py-1.5 text-sm font-medium ${
+                    className={`rounded-lg py-1.5 text-sm font-bold ${
                       f.propiedad === o.v
-                        ? "bg-white text-slate-900 shadow-sm"
-                        : "text-slate-500"
+                        ? "bg-white text-tinta shadow-sm"
+                        : "text-suave"
                     }`}
                   >
                     {o.l}
@@ -609,7 +601,7 @@ export default function ReportesPanel({
           label="Cargas"
           valor={fmtNumber(t.cargas)}
           extra={
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-tenue">
               {t.vehiculos} vehículo(s)
             </span>
           }
@@ -639,18 +631,18 @@ export default function ReportesPanel({
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
         <div className="space-y-4">
           {/* Evolución */}
           <div className="card">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-slate-600">
+              <h2 className="text-sm font-semibold text-suave">
                 {metrica === "gasto" ? "Gasto" : "Litros"} por{" "}
                 {ag === "dia" ? "día" : ag}
               </h2>
               <div className="flex gap-1">
                 <select
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                  className="rounded-lg border border-linea bg-white px-2 py-1 text-xs text-suave"
                   value={metrica}
                   onChange={(e) =>
                     setMetrica(e.target.value as "gasto" | "litros")
@@ -661,7 +653,7 @@ export default function ReportesPanel({
                   <option value="litros">Litros</option>
                 </select>
                 <select
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600"
+                  className="rounded-lg border border-linea bg-white px-2 py-1 text-xs text-suave"
                   value={agrupacion}
                   onChange={(e) =>
                     setAgrupacion(e.target.value as Agrupacion | "auto")
@@ -682,10 +674,10 @@ export default function ReportesPanel({
           <div className="card">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h2 className="text-sm font-semibold text-slate-600">
+                <h2 className="text-sm font-semibold text-suave">
                   Consumo por vehículo (L/100 km)
                 </h2>
-                <p className="mb-2 text-xs text-slate-400">
+                <p className="mb-2 text-xs text-tenue">
                   {f.vehiculo
                     ? "Cada punto es una carga de este vehículo."
                     : "Del más alto al más bajo respecto de su referencia."}
@@ -694,7 +686,7 @@ export default function ReportesPanel({
               {f.vehiculo ? (
                 <button
                   type="button"
-                  className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"
+                  className="shrink-0 rounded-lg border border-linea px-2 py-1 text-xs text-suave"
                   onClick={() => set("vehiculo", "")}
                 >
                   Ver todos
@@ -728,10 +720,10 @@ export default function ReportesPanel({
                   setVista(v.clave);
                   setVerTodos(false);
                 }}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium ${
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold ${
                   vista === v.clave
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500"
+                    ? "bg-tinta text-white"
+                    : "text-suave"
                 }`}
               >
                 {v.label}
@@ -740,14 +732,14 @@ export default function ReportesPanel({
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-tenue">
               {ranking.length}{" "}
               {ranking.length === 1 ? "resultado" : "resultados"}
             </p>
-            <label className="flex items-center gap-1 text-xs text-slate-500">
+            <label className="flex items-center gap-1 text-xs text-suave">
               Ordenar por
               <select
-                className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+                className="rounded-lg border border-linea bg-white px-2 py-1 text-xs text-tinta"
                 value={orden}
                 onChange={(e) => setOrden(e.target.value as Orden)}
               >
@@ -761,11 +753,11 @@ export default function ReportesPanel({
           </div>
 
           {ranking.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
+            <p className="py-6 text-center text-sm text-tenue">
               Sin cargas en este periodo.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-linea">
               {visibles.map((x, i) => {
                 const max = ranking[0][orden] ?? 0;
                 const val = x[orden] ?? 0;
@@ -776,32 +768,32 @@ export default function ReportesPanel({
                   <li key={x.clave} className="py-2.5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-800">
-                          <span className="mr-1.5 text-xs font-normal text-slate-400">
+                        <p className="truncate font-semibold text-tinta">
+                          <span className="mr-1.5 text-xs font-normal text-tenue">
                             {i + 1}.
                           </span>
                           {x.nombre}
                         </p>
                         {x.detalle ? (
-                          <p className="truncate text-xs text-slate-400">
+                          <p className="truncate text-xs text-tenue">
                             {x.detalle}
                           </p>
                         ) : null}
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-tinta">
                           {valorPrincipal(x, orden)}
                         </p>
                         {x.semaforo ? <PillSemaforo s={x.semaforo} /> : null}
                       </div>
                     </div>
-                    <div className="mt-1.5 h-1.5 rounded-full bg-slate-100">
+                    <div className="mt-1.5 h-1.5 rounded-full bg-neutro-suave">
                       <div
                         className="h-1.5 rounded-full bg-brand"
                         style={{ width: `${ancho}%` }}
                       />
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-suave">
                       {[
                         orden !== "gasto" && fmtMoney(x.gasto),
                         orden !== "litros" && `${fmtNumber(x.litros, 0)} L`,
@@ -841,7 +833,7 @@ export default function ReportesPanel({
           ) : null}
 
           {vista === "vehiculos" ? (
-            <p className="text-[11px] leading-snug text-slate-400">
+            <p className="text-[11px] leading-snug text-tenue">
               Consumo y costo por km se calculan con los km recorridos entre
               cargas del periodo. El estado compara el consumo con la referencia
               del vehículo (Normal hasta +10%, Atención hasta +25%, Alto más de

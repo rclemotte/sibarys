@@ -35,10 +35,10 @@ export default function VehicleDataEditor({
   );
 
   return (
-    <div className="mt-2 border-t border-slate-100 pt-2">
+    <div className="mt-2 border-t border-linea pt-2">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="text-xs font-medium text-brand"
+        className="text-xs font-bold text-brand"
       >
         {open ? "Cerrar datos" : "Editar datos (patente, nombre, tanque, consumo, alquiler, límite de km)"}
       </button>
@@ -95,7 +95,7 @@ export default function VehicleDataEditor({
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-50 px-3 py-2">
+          <div className="rounded-xl bg-fondo px-3 py-2">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -104,7 +104,7 @@ export default function VehicleDataEditor({
                 onChange={(e) => setAlquilado(e.target.checked)}
                 className="h-4 w-4 accent-brand"
               />
-              <span className="text-sm text-slate-600">Vehículo alquilado</span>
+              <span className="text-sm text-suave">Vehículo alquilado</span>
             </label>
             {alquilado ? (
               <div className="mt-2">
@@ -133,12 +133,12 @@ export default function VehicleDataEditor({
           </div>
 
           {state.error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+            <p className="rounded-lg bg-error-suave px-3 py-2 text-xs text-error">
               {state.error}
             </p>
           ) : null}
           {state.success ? (
-            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            <p className="rounded-lg bg-ok-suave px-3 py-2 text-xs text-ok">
               {state.success}
             </p>
           ) : null}

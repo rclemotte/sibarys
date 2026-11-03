@@ -26,21 +26,21 @@ const ESTADO: Record<
   EstadoMant,
   { label: string; icono: string; clase: string }
 > = {
-  vencido: { label: "Vencido", icono: "▲", clase: "bg-red-50 text-red-800" },
+  vencido: { label: "Vencido", icono: "▲", clase: "bg-error-suave text-error" },
   proximo: {
     label: "Próximo",
     icono: "!",
-    clase: "bg-amber-50 text-amber-800",
+    clase: "bg-alerta-suave text-alerta",
   },
   al_dia: {
     label: "Al día",
     icono: "✓",
-    clase: "bg-emerald-50 text-emerald-800",
+    clase: "bg-ok-suave text-ok",
   },
   sin_registro: {
     label: "Sin registro",
     icono: "…",
-    clase: "bg-slate-100 text-slate-500",
+    clase: "bg-neutro-suave text-suave",
   },
 };
 
@@ -130,10 +130,10 @@ export default function MantenimientoPanel({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-slate-700">
+        <h2 className="text-base font-semibold text-tinta">
           Mantenimiento
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-suave">
           El km actual sale de la última carga de combustible. Avisa cuando
           faltan {fmtNumber(AVISO_KM, 0)} km o menos.
         </p>
@@ -144,8 +144,8 @@ export default function MantenimientoPanel({
         {(["vencido", "proximo", "al_dia", "sin_registro"] as EstadoMant[]).map(
           (e) => (
             <div key={e} className="card px-1 py-2">
-              <p className="text-lg font-bold text-slate-900">{cuenta(e)}</p>
-              <p className="text-[10px] leading-tight text-slate-500">
+              <p className="text-lg font-bold text-tinta">{cuenta(e)}</p>
+              <p className="text-[10px] leading-tight text-suave">
                 {ESTADO[e].label}
               </p>
             </div>
@@ -160,7 +160,7 @@ export default function MantenimientoPanel({
         </button>
       ) : (
         <form action={action} className="card space-y-3">
-          <h3 className="text-sm font-semibold text-slate-600">
+          <h3 className="text-sm font-semibold text-suave">
             Registrar mantenimiento
           </h3>
           <div>
@@ -220,7 +220,7 @@ export default function MantenimientoPanel({
               onChange={(e) => setKmProx(e.target.value)}
               required
             />
-            <p className="mt-1 text-[11px] text-slate-400">
+            <p className="mt-1 text-[11px] text-tenue">
               Se propone el km actual + {fmtNumber(INTERVALO_SUGERIDO_KM, 0)}.
               Cambialo si corresponde.
             </p>
@@ -238,12 +238,12 @@ export default function MantenimientoPanel({
           </div>
 
           {state.error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
               {state.error}
             </p>
           ) : null}
           {state.success ? (
-            <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            <p className="rounded-lg bg-ok-suave px-3 py-2 text-sm text-ok">
               {state.success}
             </p>
           ) : null}
@@ -273,13 +273,13 @@ export default function MantenimientoPanel({
                 className="card flex items-center justify-between gap-2 py-2.5"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-800">
+                  <p className="truncate text-sm font-semibold text-tinta">
                     {f.nombre}{" "}
-                    <span className="text-xs font-normal text-slate-400">
+                    <span className="text-xs font-normal text-tenue">
                       {f.patente}
                     </span>
                   </p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-tenue">
                     Sin registro ·{" "}
                     {f.km_actual != null
                       ? `${fmtNumber(f.km_actual, 0)} km`
@@ -288,7 +288,7 @@ export default function MantenimientoPanel({
                 </div>
                 <button
                   type="button"
-                  className="shrink-0 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  className="shrink-0 rounded-lg border border-linea px-2.5 py-1.5 text-xs font-bold text-suave hover:bg-fondo"
                   onClick={() => abrirPara(f.vehiculo_id)}
                 >
                   Registrar
@@ -299,19 +299,19 @@ export default function MantenimientoPanel({
             <li key={f.vehiculo_id} className="card space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-800">
+                  <p className="font-semibold text-tinta">
                     {f.nombre}{" "}
-                    <span className="text-xs font-normal text-slate-400">
+                    <span className="text-xs font-normal text-tenue">
                       {f.patente}
                     </span>
                   </p>
                   <p
-                    className={`text-sm font-medium ${
+                    className={`text-sm font-bold ${
                       f.estado === "vencido"
-                        ? "text-red-700"
+                        ? "text-error"
                         : f.estado === "proximo"
-                          ? "text-amber-700"
-                          : "text-slate-600"
+                          ? "text-alerta"
+                          : "text-suave"
                     }`}
                   >
                     {textoFaltan(f)}
@@ -320,18 +320,18 @@ export default function MantenimientoPanel({
                 <Pill e={f.estado} />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 border-t border-linea pt-2 text-xs">
                 <div>
-                  <p className="text-slate-400">Km actual</p>
-                  <p className="font-medium text-slate-700">
+                  <p className="text-tenue">Km actual</p>
+                  <p className="font-bold text-tinta">
                     {f.km_actual != null
                       ? `${fmtNumber(f.km_actual, 0)} km`
                       : "Sin cargas"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-400">Próximo mantenimiento</p>
-                  <p className="font-medium text-slate-700">
+                  <p className="text-tenue">Próximo mantenimiento</p>
+                  <p className="font-bold text-tinta">
                     {f.km_proximo != null
                       ? `${fmtNumber(f.km_proximo, 0)} km`
                       : "—"}
@@ -340,7 +340,7 @@ export default function MantenimientoPanel({
               </div>
 
               {f.ultimo_fecha ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-suave">
                   Último: {fmtDate(`${f.ultimo_fecha}T12:00:00`)} a los{" "}
                   {fmtNumber(f.ultimo_km, 0)} km — {f.ultimo_descripcion}
                 </p>
@@ -349,7 +349,7 @@ export default function MantenimientoPanel({
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                  className="rounded-lg border border-linea px-2.5 py-1.5 text-xs font-bold text-suave hover:bg-fondo"
                   onClick={() => abrirPara(f.vehiculo_id)}
                 >
                   Registrar mantenimiento
@@ -357,7 +357,7 @@ export default function MantenimientoPanel({
                 {hist.length > 1 ? (
                   <button
                     type="button"
-                    className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand"
+                    className="rounded-lg px-2.5 py-1.5 text-xs font-bold text-brand"
                     onClick={() =>
                       setVerHist(abiertoHist ? null : f.vehiculo_id)
                     }
@@ -370,16 +370,16 @@ export default function MantenimientoPanel({
               </div>
 
               {abiertoHist ? (
-                <ul className="space-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <ul className="space-y-1 rounded-lg bg-fondo px-3 py-2 text-xs text-suave">
                   {hist.map((h) => (
                     <li key={h.id}>
-                      <span className="font-medium">
+                      <span className="font-bold">
                         {fmtDate(`${h.fecha}T12:00:00`)}
                       </span>{" "}
                       · {fmtNumber(h.km, 0)} km · próximo{" "}
                       {fmtNumber(h.km_proximo, 0)} km — {h.descripcion}
                       {h.por ? (
-                        <span className="text-slate-400"> ({h.por})</span>
+                        <span className="text-tenue"> ({h.por})</span>
                       ) : null}
                     </li>
                   ))}

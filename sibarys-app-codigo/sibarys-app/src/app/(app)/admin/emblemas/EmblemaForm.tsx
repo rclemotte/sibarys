@@ -26,8 +26,8 @@ export default function EmblemaForm() {
 
   return (
     <form ref={ref} action={action} className="card space-y-2">
-      <h2 className="text-sm font-semibold text-slate-600">Nuevo emblema</h2>
-      <p className="text-xs text-slate-400">
+      <h2 className="text-sm font-semibold text-suave">Nuevo emblema</h2>
+      <p className="text-xs text-tenue">
         Marca de la estación de nafta (Shell, YPF, Axion…).
       </p>
       <div className="flex gap-2">
@@ -40,12 +40,12 @@ export default function EmblemaForm() {
         <Submit />
       </div>
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-sm text-ok">
           {state.success}
         </p>
       ) : null}

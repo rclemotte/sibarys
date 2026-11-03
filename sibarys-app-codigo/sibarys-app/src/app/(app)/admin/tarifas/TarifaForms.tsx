@@ -39,7 +39,7 @@ export default function TarifaForms({
 
   return (
     <form ref={ref} action={action} className="card space-y-3">
-      <h2 className="text-sm font-semibold text-slate-600">Cargar precio de referencia</h2>
+      <h2 className="text-sm font-semibold text-suave">Cargar precio de referencia</h2>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Emblema</label>
@@ -88,9 +88,9 @@ export default function TarifaForms({
         </div>
       </div>
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
+        <p className="rounded-lg bg-error-suave px-3 py-2 text-sm text-error">{state.error}</p>
       ) : state.success ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{state.success}</p>
+        <p className="rounded-lg bg-ok-suave px-3 py-2 text-sm text-ok">{state.success}</p>
       ) : null}
       <SubmitBtn />
     </form>
@@ -110,7 +110,7 @@ export function BorrarPrecio({ id }: { id: string }) {
         await borrarPrecio(id);
         setPend(false);
       }}
-      className="ml-2 text-red-500 hover:underline"
+      className="ml-2 text-error hover:underline"
     >
       {pend ? "…" : "borrar"}
     </button>

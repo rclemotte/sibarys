@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { tienePermiso } from "@/lib/permisos";
 import { createClient } from "@/lib/supabase/server";
 import type { Marca } from "@/lib/types";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import MarcaForm from "./MarcaForm";
 import { toggleMarca } from "./actions";
 
@@ -23,7 +23,7 @@ export default async function MarcasPage() {
 
   if (!tienePermiso(yo, "puede_editar_catalogos")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -37,14 +37,13 @@ export default async function MarcasPage() {
   const marcas = (data || []) as Marca[];
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/marcas" />
 
       <MarcaForm />
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-slate-600">
+        <h2 className="mb-2 px-1 font-display text-lg font-extrabold text-tinta">
           Marcas cargadas
         </h2>
         <ul className="space-y-2">
@@ -53,10 +52,10 @@ export default async function MarcasPage() {
               key={m.id}
               className="card flex items-center justify-between gap-3"
             >
-              <p className="font-semibold">
+              <p className="font-extrabold">
                 {m.nombre}{" "}
                 {!m.activo ? (
-                  <span className="ml-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">
+                  <span className="ml-1 rounded bg-neutro-suave px-1.5 py-0.5 text-[10px] text-suave">
                     inactiva
                   </span>
                 ) : null}
@@ -64,14 +63,14 @@ export default async function MarcasPage() {
               <form action={toggleMarca}>
                 <input type="hidden" name="id" value={m.id} />
                 <input type="hidden" name="activo" value={String(m.activo)} />
-                <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+                <button className="rounded-lg border border-linea px-3 py-1.5 text-xs font-bold text-suave hover:bg-fondo">
                   {m.activo ? "Desactivar" : "Activar"}
                 </button>
               </form>
             </li>
           ))}
           {marcas.length === 0 ? (
-            <li className="card text-center text-sm text-slate-400">
+            <li className="card text-center text-sm text-tenue">
               Todavía no hay marcas. Agregá una arriba.
             </li>
           ) : null}

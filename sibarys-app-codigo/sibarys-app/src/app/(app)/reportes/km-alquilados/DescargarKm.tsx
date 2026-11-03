@@ -34,7 +34,7 @@ export default function DescargarKm({ filas }: { filas: KmAlquilado[] }) {
   }
   return (
     <button type="button" className="btn-ghost w-full" onClick={descargar}>
-      ⬇ Descargar en Excel
+      Descargar en Excel
     </button>
   );
 }

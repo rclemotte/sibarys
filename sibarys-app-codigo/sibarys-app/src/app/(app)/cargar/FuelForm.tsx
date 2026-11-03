@@ -247,7 +247,7 @@ export default function FuelForm({
         </section>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start [&>*]:min-w-0">
         <div className="space-y-4">
           <Seccion titulo="Vehículo" icono={<Truck size={18} strokeWidth={2.6} />}>
             <input type="hidden" name="vehiculo_id" value={vehiculoId} />

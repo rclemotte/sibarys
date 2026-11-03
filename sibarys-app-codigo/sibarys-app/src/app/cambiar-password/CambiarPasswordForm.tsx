@@ -19,7 +19,7 @@ export default function CambiarPasswordForm() {
   );
 
   return (
-    <form action={formAction} className="card space-y-4">
+    <form action={formAction} className="space-y-5">
       <div>
         <label className="label" htmlFor="password">
           Nueva contraseña
@@ -52,7 +52,7 @@ export default function CambiarPasswordForm() {
       </div>
 
       {state?.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p role="alert" className="rounded-2xl bg-error-suave px-4 py-3 text-sm font-bold text-error">
           {state.error}
         </p>
       ) : null}

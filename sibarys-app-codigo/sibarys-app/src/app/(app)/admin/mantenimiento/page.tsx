@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { perfilActual, tienePermiso } from "@/lib/permisos";
 import { hoyLocal } from "@/lib/format";
 import { estadoDe, type FilaMantenimiento } from "@/lib/mantenimiento";
-import AdminNav from "@/components/AdminNav";
+import EncabezadoAdmin from "@/components/EncabezadoAdmin";
 import MantenimientoPanel, { type RegistroMant } from "./MantenimientoPanel";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,7 @@ export default async function MantenimientoPage() {
 
   if (!tienePermiso(yo, "puede_editar_vehiculos")) {
     return (
-      <div className="card text-center text-sm text-slate-500">
+      <div className="card text-center text-sm text-suave">
         No tenés permiso para esta sección. Pedíselo al súper admin.
       </div>
     );
@@ -33,10 +33,9 @@ export default async function MantenimientoPage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-xl font-bold">Administración</h1>
-        <AdminNav />
-        <div className="card text-sm text-slate-500">
+      <div className="space-y-5">
+        <EncabezadoAdmin seccion="/admin/mantenimiento" />
+        <div className="card text-sm text-suave">
           Falta preparar la base de datos para mantenimientos: corré el SQL{" "}
           <code>migracion_mantenimiento.sql</code> en Supabase.
         </div>
@@ -64,9 +63,8 @@ export default async function MantenimientoPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-bold">Administración</h1>
-      <AdminNav />
+    <div className="space-y-5">
+      <EncabezadoAdmin seccion="/admin/mantenimiento" />
       <MantenimientoPanel
         filas={filas}
         registros={registros}

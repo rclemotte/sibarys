@@ -2,11 +2,12 @@
 
 import { useFormState, useFormStatus } from "react-dom";
 import { login } from "./actions";
+import PantallaAcceso from "@/components/ui/PantallaAcceso";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn-primary w-full" disabled={pending}>
+    <button type="submit" className="btn-primary w-full text-lg" disabled={pending}>
       {pending ? "Ingresando…" : "Ingresar"}
     </button>
   );
@@ -18,17 +19,8 @@ export default function LoginPage() {
   });
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand text-2xl font-black text-white">
-            S
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">Sibarys</h1>
-          <p className="text-slate-500">Control de combustible de la flota</p>
-        </div>
-
-        <form action={formAction} className="card space-y-4">
+    <PantallaAcceso titulo="¡Hola de nuevo!" subtitulo="Control de combustible de la flota">
+        <form action={formAction} className="space-y-5">
           <div>
             <label className="label" htmlFor="cedula">
               Cédula
@@ -61,7 +53,7 @@ export default function LoginPage() {
           </div>
 
           {state?.error ? (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p role="alert" className="rounded-2xl bg-error-suave px-4 py-3 text-sm font-bold text-error">
               {state.error}
             </p>
           ) : null}
@@ -69,10 +61,9 @@ export default function LoginPage() {
           <SubmitButton />
         </form>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
+        <p className="mt-6 text-center text-sm font-semibold text-tenue">
           ¿No tenés cuenta? Pedí acceso al administrador.
         </p>
-      </div>
-    </main>
+    </PantallaAcceso>
   );
 }

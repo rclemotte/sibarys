@@ -207,7 +207,7 @@ export default function ExportCatalogos() {
             disabled={cargando !== null}
             onClick={() => exportar([c.clave], c.clave)}
           >
-            {cargando === c.clave ? "Generando…" : `⬇ ${c.titulo}`}
+            {cargando === c.clave ? "Generando…" : `${c.titulo}`}
           </button>
         ))}
       </div>
@@ -225,13 +225,13 @@ export default function ExportCatalogos() {
       >
         {cargando === "todo"
           ? "Generando…"
-          : "⬇ Todo en un archivo (una hoja por catálogo)"}
+          : "Todo en un archivo (una hoja por catálogo)"}
       </button>
 
       {info ? (
         <p
           className={`rounded-lg px-3 py-2 text-sm ${
-            info.ok ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+            info.ok ? "bg-ok-suave text-ok" : "bg-error-suave text-error"
           }`}
         >
           {info.msg}
