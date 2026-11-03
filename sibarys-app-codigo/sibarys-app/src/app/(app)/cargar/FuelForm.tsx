@@ -34,7 +34,7 @@ function fmtMiles(raw: string): string {
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+104px)] z-20 lg:static lg:inset-auto">
+    <div className="fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-fondo via-fondo to-fondo/0 px-4 pb-[calc(env(safe-area-inset-bottom)+98px)] pt-6 lg:static lg:inset-auto lg:bg-none lg:p-0">
       <button type="submit" className="btn-primary w-full text-lg shadow-flotante lg:shadow-boton" disabled={pending}>
         <CheckCircle2 size={22} strokeWidth={2.6} />
         {pending ? "Guardando…" : "Guardar carga"}
