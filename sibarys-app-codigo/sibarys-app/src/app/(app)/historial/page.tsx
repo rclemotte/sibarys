@@ -477,7 +477,7 @@ export default async function HistorialPage({
                       r.litros_por_100km == null ? (
                         <Etiqueta tono="neutro">1ª carga</Etiqueta>
                       ) : anomalia ? (
-                        <Etiqueta tono="alerta">Fuera de rango</Etiqueta>
+                        <Etiqueta tono="error">Fuera de rango</Etiqueta>
                       ) : (
                         <Etiqueta tono="ok">Normal</Etiqueta>
                       );

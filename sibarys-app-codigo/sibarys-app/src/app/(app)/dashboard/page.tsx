@@ -291,8 +291,8 @@ export default async function DashboardPage() {
               <h2 className="px-1 font-display text-lg font-extrabold">Avisos</h2>
               {alertas.length > 0 ? (
                 <Aviso
-                  tono="alerta"
-                  icono={<TrendingUp size={20} strokeWidth={2.6} className="text-alerta" />}
+                  tono="error"
+                  icono={<TrendingUp size={20} strokeWidth={2.6} className="text-error" />}
                   titulo={`${alertas.length} ${alertas.length === 1 ? "vehículo" : "vehículos"} con consumo alto`}
                   href="/reportes"
                 >
@@ -324,8 +324,14 @@ export default async function DashboardPage() {
               ) : null}
               {mantAviso.length > 0 ? (
                 <Aviso
-                  tono="neutro"
-                  icono={<Wrench size={20} strokeWidth={2.6} className="text-suave" />}
+                  tono={mantAviso.some((f) => f.estado === "vencido") ? "error" : "alerta"}
+                  icono={
+                    <Wrench
+                      size={20}
+                      strokeWidth={2.6}
+                      className={mantAviso.some((f) => f.estado === "vencido") ? "text-error" : "text-alerta"}
+                    />
+                  }
                   titulo={
                     mantAviso.length === 1
                       ? "1 mantenimiento próximo o vencido"

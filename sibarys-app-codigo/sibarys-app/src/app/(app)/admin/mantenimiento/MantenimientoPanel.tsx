@@ -140,9 +140,20 @@ export default function MantenimientoPanel({
       <div className="grid grid-cols-4 gap-2 text-center">
         {(["vencido", "proximo", "al_dia", "sin_registro"] as EstadoMant[]).map(
           (e) => (
-            <div key={e} className="card px-1 py-2">
-              <p className="text-lg font-bold text-tinta">{cuenta(e)}</p>
-              <p className="text-[10px] leading-tight text-suave">
+            <div
+              key={e}
+              className={`card px-1 py-2 ${
+                cuenta(e) > 0 && e === "vencido" ? "!bg-error-suave" : cuenta(e) > 0 && e === "proximo" ? "!bg-alerta-suave" : ""
+              }`}
+            >
+              <p
+                className={`font-display text-xl font-extrabold ${
+                  cuenta(e) > 0 && e === "vencido" ? "text-error" : cuenta(e) > 0 && e === "proximo" ? "text-alerta" : "text-tinta"
+                }`}
+              >
+                {cuenta(e)}
+              </p>
+              <p className="text-[11px] font-bold leading-tight text-suave">
                 {ESTADO[e].label}
               </p>
             </div>

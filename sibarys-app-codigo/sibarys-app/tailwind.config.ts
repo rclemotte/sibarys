@@ -21,7 +21,7 @@ const config: Config = {
         oro: { DEFAULT: "#E0AE4C", dark: "#B8923A", suave: "#FBF1DC" },
         ok: { DEFAULT: "#2F8F5B", suave: "#E7F4EC" },
         alerta: { DEFAULT: "#B7791F", suave: "#FDF3DC" },
-        error: { DEFAULT: "#C2410C", suave: "#FDECE4" },
+        error: { DEFAULT: "#C62828", suave: "#FDECEC" }, // alertas que tienen que llamar la atención
         neutro: { DEFAULT: "#6E6462", suave: "#F1ECE4" },
       },
       fontFamily: {
