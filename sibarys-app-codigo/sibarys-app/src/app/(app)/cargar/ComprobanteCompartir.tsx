@@ -120,7 +120,7 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
   ctx.fillStyle = GRIS;
   ctx.font = `500 28px ${FUENTE}`;
   ctx.textAlign = "center";
-  ctx.fillText("Registrado en la app de combustible de Sibarys", ANCHO / 2, alto - 36);
+  ctx.fillText("Registrado en Sibarys Digital", ANCHO / 2, alto - 36);
 
   return new Promise((ok) => canvas.toBlob((b) => ok(b), "image/png"));
 }

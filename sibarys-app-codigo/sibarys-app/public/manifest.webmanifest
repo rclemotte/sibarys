@@ -1,7 +1,7 @@
 {
-  "name": "Sibarys — Combustible",
+  "name": "Sibarys Digital",
   "short_name": "Sibarys",
-  "description": "Registro de kilometraje y combustible de la flota Sibarys",
+  "description": "Sibarys Digital: gestión de la flota de Sibarys",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#FAF7F2",

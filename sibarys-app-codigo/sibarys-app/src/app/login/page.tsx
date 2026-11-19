@@ -19,7 +19,7 @@ export default function LoginPage() {
   });
 
   return (
-    <PantallaAcceso titulo="¡Hola de nuevo!" subtitulo="Control de combustible de la flota">
+    <PantallaAcceso titulo="¡Hola de nuevo!" subtitulo="Bienvenido a Sibarys Digital">
         <form action={formAction} className="space-y-5">
           <div>
             <label className="label" htmlFor="cedula">

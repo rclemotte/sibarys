@@ -9,8 +9,8 @@ import "@fontsource/nunito/800.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sibarys — Combustible",
-  description: "Registro de kilometraje y combustible de la flota Sibarys",
+  title: "Sibarys Digital",
+  description: "Sibarys Digital: gestión de la flota de Sibarys",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Sibarys" },
   icons: { apple: "/icons/apple-touch-icon.png" },

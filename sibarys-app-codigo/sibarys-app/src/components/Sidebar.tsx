@@ -55,10 +55,10 @@ export default function Sidebar({
   const es = (h: string) => p === h || p.startsWith(h + "/");
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col bg-tinta px-4 py-6 lg:flex">
-      <Link href="/dashboard" className="mb-8 flex items-center gap-3 px-2">
+      <Link href="/dashboard" className="mb-8 flex flex-col items-start gap-2 px-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-blanco.png" alt="Sibarys" className="h-16 w-auto" />
-        <span className="text-xs font-extrabold uppercase tracking-widest text-oro">Combustible</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.3em] text-oro">Sibarys Digital</span>
       </Link>
       <nav aria-label="Navegación principal" className="sin-barra flex-1 space-y-1 overflow-y-auto">
         <Item href="/dashboard" label="Inicio" Icono={House} activo={es("/dashboard")} />

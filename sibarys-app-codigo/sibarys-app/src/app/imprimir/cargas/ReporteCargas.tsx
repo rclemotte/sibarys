@@ -23,7 +23,7 @@ export default function ReporteCargas({
       <header className="flex items-end justify-between border-b-2 border-slate-800 pb-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-            Sibarys · Control de combustible
+            Sibarys Digital · Cargas de combustible
           </p>
           <h1 className="text-2xl font-bold">Reporte de cargas</h1>
         </div>
