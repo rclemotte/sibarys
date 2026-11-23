@@ -148,8 +148,10 @@ export default async function ReportesPage() {
           ? Number(v.capacidad_tanque_litros)
           : null,
       ref_l100: referenciaL100(v),
-      alquilado: !!v.es_alquilado,
-      empresa: v.empresa_id ? (empresaPorId.get(v.empresa_id) ?? null) : null,
+      // El chofer no debe saber qué vehículos son propios o alquilados
+      alquilado: esAdmin ? !!v.es_alquilado : false,
+      empresa:
+        esAdmin && v.empresa_id ? (empresaPorId.get(v.empresa_id) ?? null) : null,
       chofer_id: c.chofer_id,
       chofer: c.chofer_nombre ?? "—",
       combustible: c.combustible_nombre ?? "Sin combustible",

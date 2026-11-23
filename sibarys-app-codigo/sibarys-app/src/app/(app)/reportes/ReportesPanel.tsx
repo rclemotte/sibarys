@@ -212,10 +212,11 @@ export default function ReportesPanel({
   hoy: string;
   esAdmin?: boolean;
 }) {
-  // El chofer ve solo sus cargas: no tiene sentido filtrar ni rankear choferes
+  // El chofer ve solo sus cargas: no tiene sentido filtrar ni rankear choferes,
+  // y no debe saber qué vehículos son propios o alquilados
   const vistas = esAdmin
     ? VISTAS
-    : VISTAS.filter((v) => v.clave !== "choferes");
+    : VISTAS.filter((v) => v.clave !== "choferes" && v.clave !== "propiedad");
   const inicial = PERIODOS.find((p) => p.clave === "mes")!.rango();
   const [periodo, setPeriodo] = useState("mes");
   const [f, setF] = useState<Filtros>({ ...FILTROS_VACIOS, ...inicial });
@@ -295,7 +296,7 @@ export default function ReportesPanel({
       f.combustible && `Combustible: ${f.combustible}`,
       f.emblema && `Emblema: ${f.emblema}`,
       f.estacion && `Estación: ${f.estacion}`,
-      f.propiedad && `Propiedad: ${f.propiedad}`,
+      esAdmin && f.propiedad && `Propiedad: ${f.propiedad}`,
     ].filter(Boolean);
     const resumen = [
       ...filtrosTxt.map((x) => ({ Dato: "Filtro", Valor: x as string })),
@@ -358,7 +359,9 @@ export default function ReportesPanel({
         "Recorrido (km)": r.recorrido ?? "",
         Litros: r.litros,
         Gasto: r.gasto,
-        Alquilado: r.alquilado ? (r.empresa ?? "Sí") : "No",
+        ...(esAdmin
+          ? { Alquilado: r.alquilado ? (r.empresa ?? "Sí") : "No" }
+          : {}),
       })),
     );
     XLSX.writeFile(wb, `sibarys-reporte-${f.desde}-a-${f.hasta}.xlsx`);
@@ -548,6 +551,7 @@ export default function ReportesPanel({
                 ))}
               </select>
             </div>
+            {esAdmin ? (
             <div className="sm:col-span-2 lg:col-span-1">
               <label className="label">Propiedad</label>
               <div className="grid grid-cols-3 gap-1 rounded-xl bg-neutro-suave p-1">
@@ -571,6 +575,7 @@ export default function ReportesPanel({
                 ))}
               </div>
             </div>
+            ) : null}
             {activos > 0 ? (
               <button
                 type="button"
