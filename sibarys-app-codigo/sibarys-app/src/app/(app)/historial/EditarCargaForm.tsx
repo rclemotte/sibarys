@@ -217,16 +217,6 @@ export default function EditarCargaForm({
         </div>
       ) : null}
 
-      <label className="flex items-center gap-2 text-sm text-suave">
-        <input
-          type="checkbox"
-          name="tanque_lleno"
-          defaultChecked={carga.tanque_lleno}
-          className="h-4 w-4 accent-brand"
-        />
-        Tanque lleno
-      </label>
-
       <div>
         <label className="label">Notas</label>
         <input

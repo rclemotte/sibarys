@@ -45,7 +45,7 @@ function dibujar(c: Comprobante): Promise<Blob | null> {
     ["Chofer", c.chofer || "—"],
     ["Estación", c.estacion || "—"],
     ["Combustible", c.combustible || "—"],
-    ["Litros", `${fmtNumber(c.litros, 2)} L${c.tanqueLleno ? " · tanque lleno" : ""}`],
+    ["Litros", `${fmtNumber(c.litros, 2)} L`],
     ["Precio por litro", fmtMoney(c.precioLitro)],
     [
       "Odómetro",

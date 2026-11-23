@@ -52,7 +52,6 @@ export async function editarCarga(
   const odometro_km = num(formData.get("odometro_km"));
   const litros = num(formData.get("litros"));
   const total = num(formData.get("total"));
-  const tanque_lleno = formData.get("tanque_lleno") === "on";
   const notas = String(formData.get("notas") || "").trim() || null;
   const motivo = String(formData.get("motivo") || "").trim();
   const chofer_id = String(formData.get("chofer_id") || "") || null;
@@ -164,11 +163,6 @@ export async function editarCarga(
       antes: actual.estacion || "Sin especificar",
       despues: estacion || "Sin especificar",
     });
-  comparar(
-    "Tanque lleno",
-    actual.tanque_lleno ? "Sí" : "No",
-    tanque_lleno ? "Sí" : "No",
-  );
   comparar("Notas", actual.notas || "—", notas || "—");
 
   // Emblema de la carga (estación fuera de la lista). Con estación de la
@@ -238,7 +232,6 @@ export async function editarCarga(
       litros,
       costo_total: total,
       precio_litro,
-      tanque_lleno,
       notas,
     })
     .eq("id", id);

@@ -358,7 +358,6 @@ export default function ReportesPanel({
         "Recorrido (km)": r.recorrido ?? "",
         Litros: r.litros,
         Gasto: r.gasto,
-        "Tanque lleno": r.tanque_lleno ? "Sí" : "No",
         Alquilado: r.alquilado ? (r.empresa ?? "Sí") : "No",
       })),
     );

@@ -540,7 +540,6 @@ export default async function HistorialPage({
                                 ["Precio por litro", r.precio_litro != null ? fmtMoney(r.precio_litro) : "—"],
                                 ["Combustible", r.combustible_nombre ?? "—"],
                                 ["Chofer", r.chofer_nombre ?? "—"],
-                                ["Tanque lleno", r.tanque_lleno ? "Sí" : "No"],
                               ].map(([k, v]) => (
                                 <div key={k}>
                                   <dt className="text-xs font-bold text-tenue">{k}</dt>

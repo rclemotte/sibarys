@@ -75,7 +75,6 @@ export default function FuelForm({
   const [olvidada, setOlvidada] = useState(false);
   const [choferId, setChoferId] = useState("");
   const [fecha, setFecha] = useState("");
-  const [tanqueLleno, setTanqueLleno] = useState(false);
   // Pantalla de éxito después de guardar (con el comprobante)
   const [exito, setExito] = useState(false);
 
@@ -119,7 +118,6 @@ export default function FuelForm({
   useEffect(() => {
     if (state.success) {
       setExito(true);
-      setTanqueLleno(false);
       formRef.current?.reset();
       setVehiculoId("");
       setTipoId("");
@@ -367,33 +365,6 @@ export default function FuelForm({
                 </p>
               </div>
 
-              <div>
-                <p className="label">¿Llenaste el tanque?</p>
-                {tanqueLleno ? <input type="hidden" name="tanque_lleno" value="on" /> : null}
-                <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tanque lleno">
-                  {[
-                    [true, "Sí, lleno"],
-                    [false, "No"],
-                  ].map(([v, t]) => {
-                    const on = tanqueLleno === v;
-                    return (
-                      <button
-                        key={String(v)}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        onClick={() => setTanqueLleno(v as boolean)}
-                        className={`min-h-[52px] rounded-boton border-2 font-extrabold transition active:scale-[0.98] ${
-                          on ? "border-brand bg-brand-suave text-brand-dark" : "border-linea bg-white text-tinta"
-                        }`}
-                      >
-                        {t as string}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-1.5 text-xs font-semibold text-tenue">Con tanque lleno el consumo se calcula mejor.</p>
-              </div>
             </div>
           </Seccion>
         </div>

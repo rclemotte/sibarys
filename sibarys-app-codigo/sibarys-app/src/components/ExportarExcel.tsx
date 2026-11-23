@@ -41,7 +41,6 @@ export default function ExportarExcel() {
         "Costo total": r.costo_total != null ? Number(r.costo_total) : "",
         "L/100km":
           r.litros_por_100km != null ? Number(r.litros_por_100km) : "",
-        "Tanque lleno": r.tanque_lleno ? "Sí" : "No",
         Estación: r.estacion ?? "",
       }));
 
